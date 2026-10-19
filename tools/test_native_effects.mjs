@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {decodeEffectPlanes} from '../viewer/native-effects.js';
+const planes=new Uint8Array(32000),palette=Array.from({length:16},(_,i)=>[i,2*i,3*i]);
+planes[0]=0x80;planes[8000]=0x40;planes[16000]=0x20;planes[24000]=0x10;
+planes[7999]=planes[15999]=planes[23999]=planes[31999]=1;
+const rgba=decodeEffectPlanes(planes,palette);
+assert.deepEqual([...rgba.slice(0,16)],[1,2,3,255,2,4,6,255,4,8,12,255,8,16,24,255]);
+assert.equal(rgba[19],0,'Clear VGA pixels are transparent');
+assert.deepEqual([...rgba.slice(-4)],[15,30,45,255],'Last pixel retains plane order and row order');
+assert.throws(()=>decodeEffectPlanes(planes.subarray(1),palette));
+console.log('Native effect decoding passed: four planes, pixel order, palette and transparency.');

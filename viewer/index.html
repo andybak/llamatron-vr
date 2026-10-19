@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Llamatron VR prototype</title>
+<link rel="stylesheet" href="/viewer/style.css">
+<canvas id="scene" aria-label="Llamatron arena in 3D"></canvas>
+<main>
+  <div class="eyebrow">LLAMASOFT · 2112</div>
+  <h1>Llamatron <span>VR</span></h1>
+  <p id="status" role="status">Connecting to the arena…</p>
+  <button id="vr" disabled>Checking VR support…</button>
+  <button id="pause">Resume game</button>
+  <button id="start">Start / fire lock</button>
+  <p class="controls">Arrow keys to move · Space to start / lock fire<br>Drag to orbit · Scroll to zoom<br>In VR: either stick to move · trigger to start / lock fire</p>
+  <p id="input-status" role="status"></p>
+  <label><input id="raised" type="checkbox" checked> Extruded sprites</label>
+  <p class="footnote" id="audio-status">Experimental live conversion</p>
+</main>
+<script type="module" src="/viewer/viewer.js"></script>
+</html>

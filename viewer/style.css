@@ -1,0 +1,16 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #080b12; color: #e8eff8; overflow: hidden; }
+canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
+main { position: absolute; top: 32px; left: 32px; max-width: 350px; padding: 24px; border: 1px solid #263645; border-radius: 16px; background: #0c1422e8; }
+.eyebrow { color: #77c9c8; font-size: 11px; letter-spacing: .2em; }
+h1 { font-size: 32px; margin: 10px 0 16px; letter-spacing: -.04em; }
+h1 span { color: #b3f5a3; font-size: 20px; }
+#status { font-size: 13px; color: #b6c8da; min-height: 34px; }
+button { width: 100%; padding: 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #3f626c; background: #173c43; color: #d8f9f2; font: inherit; cursor: pointer; }
+button:disabled { opacity: .5; cursor: default; }
+button:hover:enabled { background: #22525a; }
+.controls { font-size: 12px; color: #9aafc5; line-height: 1.8; }
+label { font-size: 13px; display: block; margin-top: 16px; }
+.footnote { color: #758a9f; font-size: 11px; margin: 16px 0 0; }
+@media (max-width: 700px) { main { top: 12px; left: 12px; padding: 14px; max-width: 270px; } h1 { font-size: 24px; } }
