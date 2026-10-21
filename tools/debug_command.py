@@ -2,6 +2,7 @@
 import argparse
 import json
 import urllib.request
+import urllib.error
 from pathlib import Path
 
 
@@ -10,8 +11,12 @@ def execute(command, runtime=Path("artifacts/runtime")):
     request = urllib.request.Request(f"http://127.0.0.1:{state['http_port']}/",
                                      data=json.dumps({"command": command}).encode(),
                                      headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(request, timeout=20) as response:
-        return json.load(response)["response"]
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return json.load(response)["response"]
+    except urllib.error.HTTPError as error:
+        detail = json.loads(error.read()).get("error", str(error))
+        raise RuntimeError(f"DOSBox command {command!r} failed: {detail}") from error
 
 
 if __name__ == "__main__":

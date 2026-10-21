@@ -1,0 +1,145 @@
+name: Windows ZIP
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    if: github.event.deleted != true
+    runs-on: ubuntu-latest
+    outputs:
+      builds: ${{ steps.commits.outputs.builds }}
+      releases: ${{ steps.commits.outputs.releases }}
+      has_releases: ${{ steps.commits.outputs.has_releases }}
+    steps:
+      - id: commits
+        name: Plan each pushed commit and marked release
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+          commits = event.get('commits', []) if os.environ['GITHUB_EVENT_NAME'] == 'push' else []
+          if not commits:
+              commits = [{'id': os.environ['GITHUB_SHA'], 'message': ''}]
+          builds = [{'sha': c['id'], 'version': c['id'][:12]} for c in commits]
+          releases = [b for b, c in zip(builds, commits) if '[RELEASE]' in c['message']]
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('builds=' + json.dumps({'include': builds}) + '\n')
+              output.write('releases=' + json.dumps({'include': releases}) + '\n')
+              output.write('has_releases=' + str(bool(releases)).lower() + '\n')
+
+  build:
+    needs: plan
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix: ${{ fromJSON(needs.plan.outputs.builds) }}
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      SDL_VIDEODRIVER: dummy
+      SDL_AUDIODRIVER: dummy
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ matrix.sha }}
+          persist-credentials: false
+
+      - name: Obtain pinned original DOS game for asset extraction
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force .tools/ci-input | Out-Null
+          Invoke-WebRequest 'https://image.dosgamesarchive.com/games/llama.zip' -OutFile .tools/ci-input/llama.zip
+          $expected = 'F6A96E8EB7775BEE737FCD74701BE8F89F55F95C2508A7C15C0958021BB976D2'
+          if ((Get-FileHash .tools/ci-input/llama.zip -Algorithm SHA256).Hash -ne $expected) { throw 'Original game archive checksum mismatch' }
+          Expand-Archive .tools/ci-input/llama.zip .tools/ci-input/game
+
+      - name: Build using the same automatic setup as a source checkout
+        shell: powershell
+        run: ./tools/setup.ps1 -GamePath "$env:GITHUB_WORKSPACE/.tools/ci-input/game"
+
+      - name: Check frame publication and native rendering
+        shell: pwsh
+        run: |
+          & .tools/python/python.exe -m unittest discover -s tools -p test_frame_publication.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & .tools/python/python.exe tools/launch_native.py --smoke
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Create complete portable ZIP
+        shell: powershell
+        env:
+          PACKAGE_VERSION: ${{ matrix.version }}
+        run: ./tools/package.ps1 -Version $env:PACKAGE_VERSION
+
+      - name: Test extracted ZIP without compiler or source tree
+        shell: pwsh
+        env:
+          PACKAGE_VERSION: ${{ matrix.version }}
+        run: |
+          $zip = "artifacts/packages/LlamatronVR-windows-x64-$env:PACKAGE_VERSION.zip"
+          $destination = Join-Path $env:RUNNER_TEMP "Llamatron ZIP $env:PACKAGE_VERSION"
+          Expand-Archive -LiteralPath $zip -DestinationPath $destination
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$destination/tools/setup.ps1" -GamePath "$env:GITHUB_WORKSPACE/.tools/ci-input/game"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & "$destination/.tools/python/python.exe" "$destination/tools/launch_native.py" --smoke
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Windows-${{ matrix.sha }}
+          path: |
+            artifacts/packages/*.zip
+            artifacts/packages/*.sha256
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+          overwrite: true
+
+      - name: Upload diagnostic output
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Diagnostics-${{ matrix.sha }}
+          path: |
+            artifacts/*.log
+            artifacts/*.png
+            artifacts/native-runtime/*.log
+          if-no-files-found: ignore
+          retention-days: 7
+          overwrite: true
+
+  release:
+    needs: [plan, build]
+    if: needs.plan.outputs.has_releases == 'true'
+    strategy:
+      matrix: ${{ fromJSON(needs.plan.outputs.releases) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: Windows-${{ matrix.sha }}
+          path: release
+      - name: Publish marked commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          COMMIT_SHA: ${{ matrix.sha }}
+          BUILD_VERSION: ${{ matrix.version }}
+        shell: bash
+        run: |
+          tag="build-$BUILD_VERSION"
+          printf 'Windows x64 portable build of commit `%s`.\n\nExtract the ZIP, supply the original DOS game, run Setup.cmd once, then Play.cmd.\n' "$COMMIT_SHA" > notes.md
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" release/* --clobber
+          else
+            gh release create "$tag" release/* --target "$COMMIT_SHA" --title "Llamatron VR $BUILD_VERSION" --notes-file notes.md
+          fi

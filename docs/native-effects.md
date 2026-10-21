@@ -1,7 +1,7 @@
 # Native pixel effect capture
 
 The native renderer reads original effects from the isolated emulator under
-`artifacts/effects-probe`. Instrumentation changes only a copied game executable;
+`artifacts/native-runtime`. Instrumentation changes only a copied game executable;
 the supplied game files remain unchanged.
 
 ## Findings
@@ -62,13 +62,9 @@ the supplied game files remain unchanged.
    gameplay testing. Duplicate native draws and a 32 KB capture per frame add
    emulated CPU work; headset performance has not been benchmarked.
 
-After closing the current diagnostic emulator, launch another probe with:
-
-```powershell
-python tools/probe_native_effects.py --effects --audio
-```
-
-The probe leaves the game paused. Resume through the debug bridge and launch
-`Test Native.cmd` to enter native VR. It refuses to replace another running probe. Omit `--effects` for a
-full-frame diagnostic. `capture_native_frame.py` saves the latest original
-planar pixels and a decoded PNG from either probe type.
+`Setup.cmd` prepares the hooked game and captures its palette automatically;
+`Play.cmd` starts and resumes the game, launches VR and stops its emulator on exit.
+No manual debugger commands are needed. `capture_native_frame.py --runtime
+artifacts/native-runtime` can inspect the original buffers during a play session.
+The separate low-level `probe_native_effects.py` remains a developer diagnostic
+under `artifacts/effects-probe`; it is not part of user setup or launch.

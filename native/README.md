@@ -1,96 +1,106 @@
 # Native PC implementation
 
-The delivery target is one native PC executable using OpenXR. The browser
-prototype and OpenVR controller experiment are preserved on the
-`browser-prototype-archive` branch.
-The native project does not use WebXR, a browser, HTTP capture, Python at runtime,
-or the experimental OpenVR controller helper.
+The user-facing flow is in the [root README](../README.md): supply the original
+DOS game, run Setup once, then run Play. No browser or manual debugger commands
+are involved. The renderer is C++/Direct3D 11/OpenXR. The current installation
+still runs a separate DOSBox-X process managed by a private Python launcher;
+it is not yet a single executable containing emulation.
 
-## Current checkpoint
+## Setup and process ownership
 
-1. `native/build/Release/LlamatronNative.exe` is a built Windows x64 executable.
-   It embeds 406 sprite graphics and an official OpenXR loader. The loader is
-   extracted to a private `runtime` directory alongside the executable when
-   OpenXR is used; users do not need to install the OpenXR SDK.
-2. The C++ capture reader validates the recorded emulator PID, hook signature
-   and relocated game jump, then reads completed draw events directly from
-   that process. It reads matching original VGA effects and palette buffers
-   with the same publication checks as the browser prototype.
-3. Direct3D 11 renders the arena, masked sprite extrusions and native pixel
-   effects. Directional bullets lie parallel to the arena. Texture sampling is
-   nearest-neighbour; sRGB textures and targets preserve the original palette.
-4. The OpenXR path implements runtime-selected D3D11 adapter selection, stereo
-   swapchains, stage/local-floor space, predicted head views, session events and
-   separate left/right thumbstick and trigger subaction paths. It suggests
-   Touch, Index, Windows MR and simple-controller bindings. The user confirmed
-   headset rendering and left-thumbstick movement on 19 October 2026.
-5. This development checkpoint attaches to the existing emulator. It does not
-   yet contain or start emulation or own its audio. Packaging and controlling
-   an isolated emulator session inside the native application is the next step.
+1. `Setup.cmd` runs `tools/setup.ps1` using Windows PowerShell. A folder chooser
+   selects the original game; `-GamePath` supplies it without a dialog. Setup
+   remembers it in ignored `artifacts/install.json`. Placing the complete game
+   in ignored `game/` beside Setup also avoids the chooser.
+2. Source-checkout setup obtains private Python 3.12.10 x64 and Pillow 11.3.0, plus DOSBox-X
+   2026.10.01 MinGW64 SDL2. It reuses suitable CMake and Visual Studio 2022 C++
+   tools, downloading CMake 3.31.8 and installing C++ Build Tools if needed.
+   Dependencies are cached under `.tools`; system Python and PATH are unchanged.
+3. A missing OpenXR loader is built from the official Khronos OpenXR-SDK
+   `release-1.1.49` source with `DYNAMIC_LOADER=ON`. Generated sprite data and the
+   loader are embedded by `native/generate_assets.py`; MSVC builds
+   `native/build/Release/LlamatronNative.exe`. The embedded loader is extracted
+   alongside that executable at runtime. A headset runtime must already work.
+4. `tools/game_session.py` patches a separate game copy under
+   `artifacts/native-runtime`, runs a silent session to capture the original
+   palette, then stops that session. Setup exports all 406 sprites using this
+   palette before building. Rerunning setup keeps existing runtime scores.
+5. `Play.cmd` uses only `.tools/python/python.exe`. `tools/launch_native.py`
+   starts the prepared game, skips the startup screens, resumes gameplay and
+   runs the native app with `--vr --control --runtime artifacts/native-runtime`.
+   It does not need the original folder after setup has prepared the copy.
+6. The launcher owns its bridge, emulator and native app through a Windows job.
+   Closing the native app, startup/render failure, Ctrl+C or closing the launcher
+   stops its owned processes. It does not terminate other DOSBox or VR sessions.
+   OS locks prevent concurrent Setup/Play sessions from sharing this game state.
 
-## Build and run
+The source-build C++ workload can require several GB and administrator approval
+on a fresh Windows machine. A requested Windows restart requires rerunning Setup.
+CI-built ZIPs contain a `bundle.json` marker, private dependencies and the compiled
+app. Their Setup path is offline and only patches the supplied game copy; it never
+installs a compiler. `tools/package.ps1` creates these ZIPs using an explicit file
+list and includes the redistributable MSVC DLLs and third-party license notices.
 
-From the workspace root:
+## Dependency sources
 
-Build prerequisites are Visual Studio 2022 with the C++ desktop workload,
-the Windows SDK, CMake 3.21 or later, and Python with Pillow. Original game files
-and downloaded development dependencies are not included in Git.
+1. [Python embeddable distribution](https://www.python.org/ftp/python/3.12.10/).
+2. [Pillow pinned release](https://pypi.org/project/pillow/11.3.0/); setup selects
+   the CPython 3.12 Windows x64 wheel and checks its published SHA-256.
+3. [DOSBox-X release](https://github.com/joncampbell123/dosbox-x/releases/tag/dosbox-x-v2026.10.01).
+   The portable archive is checked against the tested SHA-256
+   `def2d84d4415fc26c77252839b4dafb6b476e3a4204b896292e6b05505ca8c59`.
+4. [CMake release](https://github.com/Kitware/CMake/releases/tag/v3.31.8), checked
+   against its published SHA-256 listing when a download is required.
+5. [Microsoft C++ Build Tools installer](https://aka.ms/vs/17/release/vs_BuildTools.exe).
+6. [Khronos OpenXR-SDK](https://github.com/KhronosGroup/OpenXR-SDK/tree/release-1.1.49)
+   and its [dynamic-loader build instructions](https://github.com/KhronosGroup/OpenXR-SDK/blob/release-1.1.49/README.md).
 
-Prepare the generated sprite assets using the commands in the root README.
-Place an official Windows x64 `openxr_loader.dll` at
-`native/generated/openxr_loader.dll` before building; the directory is ignored.
+## Native rendering
+
+1. Capture validates the recorded emulator PID, hook signature and relocated
+   game jump. Sprite events and VGA effect/palette buffers are read directly
+   from that process with complete-frame publication checks.
+2. Direct3D 11 renders the arena, masked sprite extrusions and captured original
+   pixel effects. Bullets lie parallel to the arena. Textures use nearest-neighbour
+   sampling; setup exports the game palette instead of provisional EGA colours.
+3. OpenXR selects the D3D11 adapter and supplies stereo swapchains, floor/local
+   space and predicted head views. Render targets use the negotiated format;
+   DXGI 1.1 enables shared textures in SteamVR. Separate hand subactions suggest
+   Touch, Index, Windows MR and simple-controller bindings; the left stick has
+   priority, with the right available as fallback.
+
+## Developer checks
+
+From the repository root after Setup:
 
 ```powershell
-tools/build_native.ps1
-native/build/Release/LlamatronNative.exe
+.\Play.cmd --smoke
+.tools\python\python.exe -m unittest discover -s tools -p test_frame_publication.py
 ```
 
-The default is a read-only native desktop preview. It finds the development
-capture state under `artifacts/effects-probe`; `--runtime` overrides that path.
-Default read-only mode lets the existing game retain its current input owner.
+The smoke path starts a silent game, renders a completed frame using D3D11 WARP,
+then shuts down the emulator. The image is `artifacts/native-launch-smoke.png`.
+It does not test headset rendering or physical controllers. Setup itself leaves
+no emulator running. `--mute` is available for a normal silent VR launch.
 
-```powershell
-native/build/Release/LlamatronNative.exe --smoke --snapshot artifacts/native-preview.png
-native/build/Release/LlamatronNative.exe --xr-probe
-native/build/Release/LlamatronNative.exe --vr
-```
+Low-level `--xr-probe`, `--runtime`, `--snapshot`, `--smoke` and `--control`
+options remain in the native executable for diagnosis. Low-level capture tools
+remain available; they are not required steps in the user launch flow.
 
-For the current development test, start `python tools/probe_native_effects.py
---effects --audio`, resume that isolated emulator through the debug bridge, then
-run `Test Native.cmd`. The launcher uses `--vr --control` and records startup
-output in `artifacts/native-user-test.log`. It requires a running OpenXR runtime
-and an already running emulator; it does not start the game itself.
+## Validation and remaining work
 
-`--control` enables native input writes for an isolated test session. Concurrent
-browser input must be stopped before using that option. This is development
-input ownership, not the final launch flow.
+1. Native VR rendering and left-thumbstick movement were confirmed by the user
+   on 19 October 2026. This predates the consolidated setup/launcher.
+2. The consolidated setup and offscreen launch/cleanup are checked on the
+   development PC. The new launcher still needs a headset retry. Automatic C++
+   Build Tools installation on a machine without a compiler is not yet tested.
+3. Other controller profiles, both-hand behaviour, placement, native bullet and
+   effect appearance and sustained performance need more headset testing.
+4. A final single native executable would need to integrate emulator ownership
+   and packaging internally. The CI-built portable ZIP already removes the compiler
+   and asset-build work from end-user setup.
 
-## Verified results
-
-1. Release build passed with MSVC 14.44 and the Windows SDK. The initial
-   standalone renderer executable is approximately 3 MiB.
-2. The native offscreen smoke check attached to the live recorded emulator and
-   rendered completed frame 61188 with 36 sprite draws and native effects through
-   D3D11 WARP. Output: `artifacts/native-preview.png` (1280 by 800).
-3. The PNG was visually inspected, and its background pixel matched the
-   expected RGB (6, 9, 14). Build output: `artifacts/native-build.log`.
-4. A normal Windows launch through `Test Native.cmd` entered the headset, and
-   the user confirmed native VR rendering and left-thumbstick movement.
-   Eye render targets explicitly use the negotiated swapchain format, and
-   adapter selection uses DXGI 1.1 so SteamVR can share the eye textures.
-   Runtime-side logs are under `artifacts/native-xr-logs`. Other controller
-   profiles and sustained performance have not been validated.
-
-## Remaining integration
-
-1. Give the native application ownership of emulator startup, shutdown, audio
-   and game state, replacing the Python/debug-server launch path.
-2. Bundle game/emulator assets and required licenses into the final application.
-   The current capture reader depends on a separately running development game.
-3. Validate both controllers, stereo placement, bullet orientation and original
-   effect appearance more thoroughly in the native headset session.
-4. Extend native effect coverage and measure headset performance under load.
-
-The headers in `vendor/openxr` are Khronos OpenXR 1.1.49 (license included).
-The application requests OpenXR 1.0 plus `XR_KHR_D3D11_enable`. Generated asset
-code, build output and the development loader copy stay outside versioned source.
+OpenXR 1.1.49 headers and their license are in `vendor/openxr`. The app requests
+OpenXR 1.0 plus `XR_KHR_D3D11_enable`. The original game, extracted graphics,
+patched copy, downloaded tools and build output are not committed. The
+`browser-prototype-archive` branch preserves earlier experiments.
