@@ -186,7 +186,12 @@ class GameSession:
                     self.command("EXEC RUN")
                     time.sleep(.15)
                     self.command("BREAK")
-                _, info = read_frame(reader)
+                # BREAK can land halfway through the framebuffer publication.
+                # Keep emulation running until a coherent snapshot is available;
+                # retrying the same paused, odd seqlock cannot make progress.
+                self.command("EXEC RUN")
+                _, info = wait_for(lambda: read_frame(reader))
+                self.command("BREAK")
                 (RUNTIME / "palette.json").write_text(json.dumps(info["palette"], indent=2))
             finally:
                 reader.close()
