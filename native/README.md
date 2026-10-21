@@ -104,3 +104,25 @@ OpenXR 1.1.49 headers and their license are in `vendor/openxr`. The app requests
 OpenXR 1.0 plus `XR_KHR_D3D11_enable`. The original game, extracted graphics,
 patched copy, downloaded tools and build output are not committed. The
 `browser-prototype-archive` branch preserves earlier experiments.
+
+## Continuous builds and releases
+
+The Windows ZIP workflow builds every commit pushed to `main`, including each
+commit in a batched push. It runs source setup, frame-publication checks and a
+D3D11 WARP rendering check, then packages the native executable, private Python
+and Pillow, DOSBox-X, MSVC runtime DLLs and third-party notices. The extracted ZIP
+must also pass offline setup and rendering before it is uploaded.
+
+The `Windows-<commit>` Actions artifact contains the distribution ZIP and its
+SHA-256 file. Artifacts expire after 30 days. A commit message containing the exact
+marker `[RELEASE]` publishes that commit's ZIP as a release tagged
+`build-<12-character-commit>`; unmarked commits create no release. Manual workflow
+runs build the selected revision without publishing a release. Release assets
+remain available until removed.
+
+CI obtains its original game input from
+`https://image.dosgamesarchive.com/games/llama.zip`, pinned to SHA-256
+`F6A96E8EB7775BEE737FCD74701BE8F89F55F95C2508A7C15C0958021BB976D2`.
+The original and patched DOS executable are excluded from the distribution.
+Extracted sprite data is embedded in the native executable. End users supply a
+separate original game copy when running Setup.
