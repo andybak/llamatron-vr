@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "com.unity.inputsystem": "1.14.2",
+    "com.unity.xr.management": "4.5.4",
+    "com.unity.xr.openxr": "1.17.1",
+    "com.unity.xr.androidxr-openxr": "1.1.0",
+    "com.unity.modules.audio": "1.0.0",
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.jsonserialize": "1.0.0",
+    "com.unity.modules.xr": "1.0.0",
+    "com.unity.pipeline": "0.9.0-exp.1"
+  }
+}

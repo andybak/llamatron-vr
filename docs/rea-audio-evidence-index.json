@@ -1,0 +1,227 @@
+{
+  "driver_sha256": "974cd3d53ba1bb6c621ba0a5168c5e5df18bd4846b58fd2b7dd856c925b1fcda",
+  "driver_bytes": 1895,
+  "records": [
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-0076-code.json",
+      "record_sha256": "6ff76464f10c802720e93a2abac77cbddad49f4da4eec3513a049b38f55d41bd",
+      "evidence_id": "ev_aa673f1953577bff9793c9d69b84016efe3f1144f72b0d8baa8f98d42d07c07d",
+      "operation": "procedure_pseudo_code",
+      "driver_entry": "0x0076",
+      "wrapper_sha256": "71da9ea512f202b7da7b3c914cd8e6430ff9a58d1121a3a3c5484e3c396bceb2",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-0076.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-0076-function.json",
+      "record_sha256": "4b60bdb2a7e956f94f7e8bca62cf87be47b6a0abdae5b041abe93006e20fab4f",
+      "evidence_id": "ev_9d2eb6be50eeece5a7cac9250a743bdb9db17d8fe4f0b5e376f165d3821a6077",
+      "operation": "analyze_function",
+      "driver_entry": "0x0076",
+      "wrapper_sha256": "71da9ea512f202b7da7b3c914cd8e6430ff9a58d1121a3a3c5484e3c396bceb2",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-0076.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-00c2-code.json",
+      "record_sha256": "da3e47722f06d89575749b010f9d1aaa99116a4708da5fc1f54dc91a1f4db18b",
+      "evidence_id": "ev_b6c29197d81074ab926c0be8c7896350f8267f6cae2750dbff1df3923014a48f",
+      "operation": "procedure_pseudo_code",
+      "driver_entry": "0x00c2",
+      "wrapper_sha256": "32853c14b3493084c281cc1cff05b8109df7644f4a36e2cf2d41ec32610052ad",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-00c2.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-00c2-function.json",
+      "record_sha256": "44983b3ceea7dab06b56589bb69cb79940c8108f010213dcb5d0e6f80cc87dbb",
+      "evidence_id": "ev_cc93075ae755dfbc3bc96dbc07971ceecd072dc81da7f33d1988cefd79de0886",
+      "operation": "analyze_function",
+      "driver_entry": "0x00c2",
+      "wrapper_sha256": "32853c14b3493084c281cc1cff05b8109df7644f4a36e2cf2d41ec32610052ad",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-00c2.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-010f-code.json",
+      "record_sha256": "df99b74c068d6c2b8c74225e936ccecaa153fbee9c34ebb1515ae5db758bc64b",
+      "evidence_id": "ev_8c4e5f2fbb036e34a22e087653bb3c0e8b7697c9b8de05a8abd28c5801a6eb4b",
+      "operation": "procedure_pseudo_code",
+      "driver_entry": "0x010f",
+      "wrapper_sha256": "1affe5fbb38005d3e88db64d31c430ace2b652cb2f0f1c409f74251aa94c4dc8",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-010f.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-010f-function.json",
+      "record_sha256": "7596045a07fd0134162d0f0880426436a669935c718598d6e06291c8474e7482",
+      "evidence_id": "ev_942c9874698be491c20e089995495b4fbf4c76caa0f5fa1ffa36f242c04270a9",
+      "operation": "analyze_function",
+      "driver_entry": "0x010f",
+      "wrapper_sha256": "1affe5fbb38005d3e88db64d31c430ace2b652cb2f0f1c409f74251aa94c4dc8",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-010f.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-0143-code.json",
+      "record_sha256": "2204210513bbdfb56c1c5532d42675f46454d6d3388d69e63aaeb2825d1521c2",
+      "evidence_id": "ev_5b57bb43fd8963bd856cf0d7161777579e6fb3e0b8808eebb96d50eaa0f268a6",
+      "operation": "procedure_pseudo_code",
+      "driver_entry": "0x0143",
+      "wrapper_sha256": "7b5381284edc5ac0b42a5a9c8917e5e7c3749702a08b135dfc882372d5fa58f0",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-0143.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-0143-function.json",
+      "record_sha256": "bb3f384e2bcba993d1ef1fa1e682dd8892b6314ba11b224b6f07ea5907d3d8eb",
+      "evidence_id": "ev_7e8614500809138bc39132032488e9be6b8983b1f889c0e062aa8cc282f2683e",
+      "operation": "analyze_function",
+      "driver_entry": "0x0143",
+      "wrapper_sha256": "7b5381284edc5ac0b42a5a9c8917e5e7c3749702a08b135dfc882372d5fa58f0",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-0143.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-014b-code.json",
+      "record_sha256": "af4485cb0e7153a3f9c889909f9cc49d97dfb26bbcfd75adfe94c9549e9a1274",
+      "evidence_id": "ev_da0907886462543f841ef2fc46bba7642ddb264fa3a1381d22cdc6e0a1a0525b",
+      "operation": "procedure_pseudo_code",
+      "driver_entry": "0x014b",
+      "wrapper_sha256": "ff577a2a4871abbabafb2736ea88238f5c3be46237025c7acc83b9364f52d1e2",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-014b.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-014b-function.json",
+      "record_sha256": "7e68ce442c50b856f1cbfe8052245785e2d1f8d4268f6af39f624140c3e2f8f5",
+      "evidence_id": "ev_13263e1fb1f8c667ea628c0c07f439434edef392757da55bd78fb237c4fcfd9e",
+      "operation": "analyze_function",
+      "driver_entry": "0x014b",
+      "wrapper_sha256": "ff577a2a4871abbabafb2736ea88238f5c3be46237025c7acc83b9364f52d1e2",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-014b.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-0171-code.json",
+      "record_sha256": "75f12c2280c04e14ec931ba4d740d2f30070a6f4925c5d7a5121fa2c0c06a282",
+      "evidence_id": "ev_a60e66fd6d89fdef68a1ef354b51935f1533c5a95681aee04621dc7a552d4f3d",
+      "operation": "procedure_pseudo_code",
+      "driver_entry": "0x0171",
+      "wrapper_sha256": "bf62227230152f86682790b2bcff00f8bba16e2da656cf04e55784e3fac1d604",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-0171.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-0171-function.json",
+      "record_sha256": "6ded14c8ab308ff722bd904e491c7e13c0a701bd348c64f35d7d65013587ed08",
+      "evidence_id": "ev_87cf3215151fbf36dadc7d6f1c2d15da85dbc6600059ca3d6d8baace39464bdf",
+      "operation": "analyze_function",
+      "driver_entry": "0x0171",
+      "wrapper_sha256": "bf62227230152f86682790b2bcff00f8bba16e2da656cf04e55784e3fac1d604",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-0171.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-01a2-code.json",
+      "record_sha256": "8d7e75fe3c6a589a2e15af3aae8b73c0e90fe0e694eca9685bb222cdfd3ed999",
+      "evidence_id": "ev_ad5209933ab7f5fab7132f89e5ebf7b69391d99853228eda6209aed77fe4e64b",
+      "operation": "procedure_pseudo_code",
+      "driver_entry": "0x01a2",
+      "wrapper_sha256": "b0a164af3e600f6d988c91cdcf7890b70db028f55a5a08030f9d3fe37d2b7f30",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-01a2.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-01a2-function.json",
+      "record_sha256": "d4c80b2410f82c951048e551b4dc7d4750e32c2aeef3d268d7cbdb3ded8be6f8",
+      "evidence_id": "ev_00d3d455536d770d7528a2792857e6644a65b732564cb4734fec125d1d8b4101",
+      "operation": "analyze_function",
+      "driver_entry": "0x01a2",
+      "wrapper_sha256": "b0a164af3e600f6d988c91cdcf7890b70db028f55a5a08030f9d3fe37d2b7f30",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-01a2.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-02d1-code.json",
+      "record_sha256": "02304b0a22790c33fcbea520fff8df1ca31c549fbda84be8085ccd1d86677687",
+      "evidence_id": "ev_f560ecbaa09f0ce25fa23e2022b5818ce7cdd9dcec51e0eec8c0c3fefb4e2f57",
+      "operation": "procedure_pseudo_code",
+      "driver_entry": "0x02d1",
+      "wrapper_sha256": "cd2849f522a51d7efe1b4f8449edeee961fbf5940052717e4871c242016292df",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-02d1.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-02d1-function.json",
+      "record_sha256": "309feba332eb696e9fe9bb7a0de598ed9e11fad1b57040f1e18c0965ba50de0a",
+      "evidence_id": "ev_43c7e30dd10660be37aed8ac24faa01a2ea10220da3dd3ffe06047d3b9b4949d",
+      "operation": "analyze_function",
+      "driver_entry": "0x02d1",
+      "wrapper_sha256": "cd2849f522a51d7efe1b4f8449edeee961fbf5940052717e4871c242016292df",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-02d1.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-038c-code.json",
+      "record_sha256": "90e783888cafa0bab8c5c92b55f572831b5c646a550ff5999628b553f78ac2f6",
+      "evidence_id": "ev_a40040b225b2b9619542c6989c64d9fc49b3c83d2d5accb438b35daecc8fdc3e",
+      "operation": "procedure_pseudo_code",
+      "driver_entry": "0x038c",
+      "wrapper_sha256": "1bdc143e4a9a3028982d8590523327eb359b40299794ea88b4207e79e1dd5c79",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-038c.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-038c-function.json",
+      "record_sha256": "3220bd31f7c69af44723f52a078399086cb48e76e2b4b9fdcfdacc627165903f",
+      "evidence_id": "ev_8f915982b9c5a829be125bcddc0555d9a20e1f7eabd3dab59b25bd82e11c1958",
+      "operation": "analyze_function",
+      "driver_entry": "0x038c",
+      "wrapper_sha256": "1bdc143e4a9a3028982d8590523327eb359b40299794ea88b4207e79e1dd5c79",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-038c.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-03ed-code.json",
+      "record_sha256": "2bdd04e9d22e9f4178516a005fd7aee9c75d54d42adfe6ffcd9be9349e53a24a",
+      "evidence_id": "ev_36c4f34838e2f646216b655061893f99bcc1eb74aefe624df32e0fcbbe6d697d",
+      "operation": "procedure_pseudo_code",
+      "driver_entry": "0x03ed",
+      "wrapper_sha256": "05e2b944e25c3fc378c443a76dcfb97c7ec96d491970d9674fbcf5db678ac2b1",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-03ed.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-03ed-function.json",
+      "record_sha256": "fd48a8230226a9a3ccbe5e4203637118fe4d988eb7026523e8aafe6f08e3415d",
+      "evidence_id": "ev_aa188bb04b0a9e5a05d3c81e1af54bb3215cf6e9f1b0b5b64d72211c603f77b0",
+      "operation": "analyze_function",
+      "driver_entry": "0x03ed",
+      "wrapper_sha256": "05e2b944e25c3fc378c443a76dcfb97c7ec96d491970d9674fbcf5db678ac2b1",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-03ed.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-045e-code.json",
+      "record_sha256": "2be5da168db2e3110a849d5ff8f378dcabf2319eab470c7cdfc9c1fd64dbdf41",
+      "evidence_id": "ev_76c4c180bba0a66b7fadcc0bc38a187d539070a9a6e375909aebedf3180edbc3",
+      "operation": "procedure_pseudo_code",
+      "driver_entry": "0x045e",
+      "wrapper_sha256": "c75b7129cefae134b2a7080767dbed9bdd1a927fe2809620bb447411eaf98e78",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-045e.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-045e-function.json",
+      "record_sha256": "2200ad3e43ce92e342e3b192c6a90a9a584bdeb7db237a9cb00bf8793ef891a2",
+      "evidence_id": "ev_c079c7c166013bb86ea73cb22bdd85532d91bdb4e5c09590c2b661a7e12655dd",
+      "operation": "analyze_function",
+      "driver_entry": "0x045e",
+      "wrapper_sha256": "c75b7129cefae134b2a7080767dbed9bdd1a927fe2809620bb447411eaf98e78",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-045e.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-04fa-code.json",
+      "record_sha256": "47a2cf0d260c258ca1741333a7dd0d9eeee51e954635e6bd3ee39ad86b4ac26d",
+      "evidence_id": "ev_d75d46629016358e11ac79ae801442c3829e294d9b43ccccda3c53ed77f644a5",
+      "operation": "procedure_pseudo_code",
+      "driver_entry": "0x04fa",
+      "wrapper_sha256": "4ad6b751760e15141cd44c61090b9b0a5675d810a2d34819bbdf84a725f772f5",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-04fa.provenance.json"
+    },
+    {
+      "record": "artifacts/reconstruction/audio/rea-driver-04fa-function.json",
+      "record_sha256": "f3019b781c337dede3b56ebe157238dc528974606031e730cd53304a5ce68052",
+      "evidence_id": "ev_336b86109d68c34e503eddfa3b5a7a3ca162a5a002a658f0c7926d88607a115b",
+      "operation": "analyze_function",
+      "driver_entry": "0x04fa",
+      "wrapper_sha256": "4ad6b751760e15141cd44c61090b9b0a5675d810a2d34819bbdf84a725f772f5",
+      "provenance": "artifacts/reconstruction/audio/driver-entry-04fa.provenance.json"
+    }
+  ],
+  "limitations": [
+    "Analysis-only 64-byte DOS headers are never executed.",
+    "Wrapper load images match every original flat driver byte.",
+    "Static dossiers do not establish hardware timing or audible parity."
+  ]
+}

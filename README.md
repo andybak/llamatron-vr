@@ -36,3 +36,5 @@ Download and extract the [latest Windows release](https://github.com/andybak/lla
    and include `artifacts/setup.log` or `artifacts/native-user-test.log`.
 
 [Developer guide](native/README.md)
+
+[Standalone PC/Android reconstruction work](standalone/README.md)

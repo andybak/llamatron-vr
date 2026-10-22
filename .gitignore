@@ -8,3 +8,16 @@ native/build-vr/
 native/generated/
 milestones/
 game/
+standalone/**/bin/
+standalone/**/obj/
+standalone/Unity/Library/
+standalone/Unity/Temp/
+standalone/Unity/.utmp/
+standalone/Unity/Logs/
+standalone/Unity/UserSettings/
+standalone/Unity/obj/
+standalone/Unity/*.csproj
+standalone/Unity/*.sln
+standalone/Unity/Assets/Llamatron/Resources/Generated/
+standalone/Unity/Assets/XR/UserSimulationSettings/
+standalone/Unity/Assets/XR/UserSimulationSettings.meta

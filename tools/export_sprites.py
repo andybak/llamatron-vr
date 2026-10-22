@@ -70,6 +70,9 @@ def main():
         for index, offset in enumerate(pointers):
             table_indices.setdefault(offset, []).append(index)
         offsets = set(pointers)
+        # CS:46b6/477f reference the beam head directly, outside pointer tables.
+        hardcoded = {0x7AA2} if bank == "main" else set()
+        offsets.update(hardcoded)
         # Animation routines also advance from a table entry to adjacent records.
         # These frames have no pointer of their own in the initial pointer run.
         for start in pointers:
@@ -89,7 +92,8 @@ def main():
                 rgba.save(folder / f"{name}.png")
                 indices.save(folder / f"{name}.indices.png")
                 item.update(bank=bank, id=name, table_indices=table_indices.get(offset, []),
-                            discovery="pointer_table" if offset in table_indices else "adjacent_animation_record")
+                            discovery="pointer_table" if offset in table_indices else
+                                      "hardcoded_render_reference" if offset in hardcoded else "adjacent_animation_record")
                 metadata.append(item)
                 seen[offset] = item
                 previews.append((name, rgba))
@@ -106,6 +110,7 @@ def main():
     sheet.save(args.output / "contact-sheet.png")
     (args.output / "sprites.json").write_text(json.dumps({
         "palette": str(args.palette) if args.palette else "Provisional standard EGA; runtime palette not verified",
+        "palette_rgb": palette,
         "sprites": metadata}, indent=2), encoding="utf-8")
     print(f"Exported {len(metadata)} sprites to {args.output}")
 
