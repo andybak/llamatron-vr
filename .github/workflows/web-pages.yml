@@ -72,6 +72,19 @@ jobs:
             echo "$delimiter"
           } >> "$GITHUB_ENV"
 
+      # Include generated asset metadata so fresh GUIDs don't defeat Library reuse.
+      # The source hash excludes that generated folder; its inputs are hashed instead.
+      - name: Restore Unity WebGL cache
+        id: unity-cache
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: |
+            standalone/Unity/Library
+            standalone/Unity/Assets/Llamatron/Resources/Generated
+          key: UnityWebGL-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('standalone/Unity/ProjectSettings/ProjectVersion.txt') }}-${{ hashFiles('standalone/Unity/Packages/**') }}-${{ hashFiles('standalone/Unity/Assets/**', '!standalone/Unity/Assets/Llamatron/Resources/Generated/**', 'standalone/Unity/ProjectSettings/**', 'tools/prepare_unity_web.py', 'tools/inspect_game.py', 'tools/export_sprites.py', 'tools/export_standalone_assets.py', 'tools/recover_audio.py', 'tools/fixtures/unity-web-profile.json') }}
+          restore-keys: |
+            UnityWebGL-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('standalone/Unity/ProjectSettings/ProjectVersion.txt') }}-${{ hashFiles('standalone/Unity/Packages/**') }}-
+
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.12'
@@ -101,6 +114,17 @@ jobs:
               assert (root / name).exists(), f'Missing precached asset: {name}'
           assert any((root / 'Build').glob('*.wasm*')), 'Missing WebAssembly player'
           PY
+
+      # Save after a verified build, even if a later artifact upload fails. Only the
+      # newest marked commit writes, avoiding competing matrix jobs and cache churn.
+      - name: Save verified Unity WebGL cache
+        if: matrix.sha == needs.plan.outputs.latest && steps.unity-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: |
+            standalone/Unity/Library
+            standalone/Unity/Assets/Llamatron/Resources/Generated
+          key: ${{ steps.unity-cache.outputs.cache-primary-key }}
 
       - name: Retain each marked commit's web build
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

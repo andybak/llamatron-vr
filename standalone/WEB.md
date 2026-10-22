@@ -68,6 +68,16 @@ prove immersive stereo, controller or audio behavior on physical headsets.
    The small fixture `tools/fixtures/unity-web-profile.json` preserves the
    captured palette and the existing 96-byte sample-30 overread profile; CI
    does not invent padding or require a live emulator capture.
+6. GitHub caches the Unity `Library` (including package, shader and incremental
+   build data) together with generated assets and their Unity metadata. Cache
+   keys include runner OS/architecture, Editor version, package configuration,
+   project sources/settings and asset-generation inputs. A source change can
+   restore the newest cache with the same Editor and packages; an Editor or
+   package change starts cold. Asset generation and the Unity build still run
+   on cache hits. Only the newest marked commit saves a cache, after output
+   verification succeeds. Increase `UnityWebGL-v1` in both workflow key prefixes
+   to discard existing caches if necessary. Caches are optional accelerators;
+   GitHub can evict them and the workflow can rebuild from source.
 
 Package source and license:
 [WebXR Export 0.19.0](https://github.com/De-Panther/unity-webxr-export/tree/1454bd1a6716cbcd51d4013d780d97754be97d5d/Packages/webxr),
