@@ -186,6 +186,31 @@ namespace Llamatron.Editor
 
         [MenuItem("Llamatron/Build Windows preview")]
         public static void BuildWindows() => Build(BuildTarget.StandaloneWindows64, "windows/LlamatronStandalone.exe");
+
+        [MenuItem("Llamatron/Build Web preview")]
+        public static void BuildWeb()
+        {
+            Llamatron.Web.Editor.WebBuildSetup.Configure();
+            Build(BuildTarget.WebGL, "web");
+            string workspace = Path.GetFullPath(Path.Combine(Application.dataPath, "../../.."));
+            string output = Path.Combine(workspace, "artifacts/standalone/web");
+            string buildId = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+            foreach (string name in new[] { "index.html", "service-worker.js" })
+            {
+                string path = Path.Combine(output, name);
+                File.WriteAllText(path, File.ReadAllText(path).Replace("__LLAMATRON_BUILD_ID__", buildId));
+            }
+            var files = new List<string> { "./" };
+            foreach (string path in Directory.GetFiles(output, "*", SearchOption.AllDirectories))
+            {
+                string relative = Path.GetRelativePath(output, path).Replace('\\', '/');
+                if (relative != "precache.json" && relative != "service-worker.js") files.Add(relative);
+            }
+            File.WriteAllText(Path.Combine(output, "precache.json"), JsonUtility.ToJson(new WebPrecache { files = files.ToArray() }));
+            Debug.Log($"[LLWEB] Web app ready at {output}; build={buildId}.");
+        }
+
+        [Serializable] private sealed class WebPrecache { public string[] files; }
         public static void BuildAndroid() => BuildAndroidXr();
         [MenuItem("Llamatron/Build Android XR preview")]
         public static void BuildAndroidXr()

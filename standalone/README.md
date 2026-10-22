@@ -1,5 +1,7 @@
 # Standalone reconstruction in progress
 
+[Browser build and WebXR instructions](WEB.md)
+
 The existing `Play.cmd` still starts the DOSBox-based Windows mod. This directory
 contains the replacement's portable gameplay core, with no DOS, emulator, process
 memory, Windows, graphics or Unity API dependencies. The Unity presentation is an

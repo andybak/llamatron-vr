@@ -19,7 +19,19 @@ namespace Llamatron.Unity
         {
             for (int id = 1; id <= 32; id++)
             {
-                AudioClip clip = Resources.Load<AudioClip>($"Generated/Audio/sample-{id:00}");
+                AudioClip clip;
+#if UNITY_WEBGL && !UNITY_EDITOR
+                TextAsset pcm = Resources.Load<TextAsset>($"Generated/Audio/sample-{id:00}-pcm");
+                if (pcm == null || pcm.bytes.Length != OriginalSoundData.Frames[id - 1])
+                    throw new InvalidOperationException($"[LLWEB] Missing exact PCM for sample {id}; regenerate the audio assets.");
+                byte[] bytes = pcm.bytes;
+                float[] samples = new float[bytes.Length];
+                for (int i = 0; i < bytes.Length; i++) samples[i] = (bytes[i] - 128) / 128f;
+                clip = AudioClip.Create($"Original sample {id}", samples.Length, 1, OriginalSoundData.ContainerHz, false);
+                if (!clip.SetData(samples, 0)) throw new InvalidOperationException($"[LLWEB] Could not load PCM sample {id}.");
+#else
+                clip = Resources.Load<AudioClip>($"Generated/Audio/sample-{id:00}");
+#endif
                 if (clip == null || clip.channels != 1 || clip.frequency != OriginalSoundData.ContainerHz ||
                     clip.samples != OriginalSoundData.Frames[id - 1])
                     throw new InvalidOperationException($"[LLAUDIO] Missing or changed sample {id}; recover and bake sampled audio.");
@@ -51,8 +63,10 @@ namespace Llamatron.Unity
         // Smoke diagnostics only: verifies that Unity's mixer produced a signal.
         public void ObserveOutput()
         {
+#if !UNITY_WEBGL || UNITY_EDITOR
             AudioListener.GetOutputData(meter, 0);
             for (int i = 0; i < meter.Length; i++) PeakOutput = Math.Max(PeakOutput, Math.Abs(meter[i]));
+#endif
         }
 
         public void SetSystemPaused(bool value)
@@ -66,6 +80,9 @@ namespace Llamatron.Unity
         {
             Driver.Started -= Play; Driver.Stopped -= Stop;
             if (voice != null) voice.Stop();
+#if UNITY_WEBGL && !UNITY_EDITOR
+            foreach (AudioClip clip in clips) if (clip != null) Destroy(clip);
+#endif
         }
     }
 }

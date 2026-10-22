@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#102126">
+  <title>Llamatron VR</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game" tabindex="0" aria-label="Llamatron game"></canvas>
+  <section id="welcome" aria-labelledby="title">
+    <div class="card">
+      <p class="eyebrow">LLAMATRON · 2112</p>
+      <h1 id="title">Rescue the beasties.</h1>
+      <p>Fight through the herd in your browser, or enter VR with a compatible headset.</p>
+      <progress id="progress" max="1" value="0" aria-label="Loading game"></progress>
+      <p id="status" role="status">Loading…</p>
+      <button id="start" disabled>Start game</button>
+      <p class="controls">WASD / arrows: move · Space: lock firing direction<br>P: pause · R: restart</p>
+      <p class="preview">Reconstruction preview · Some original game features are still in progress.</p>
+    </div>
+  </section>
+  <nav aria-label="Game controls">
+    <button id="vr" disabled hidden>Enter VR</button>
+    <button id="fullscreen" disabled>Fullscreen</button>
+    <button id="install" hidden>Install app</button>
+  </nav>
+  <p id="error" role="alert" hidden></p>
+  <script>
+    const canvas = document.querySelector('#game');
+    const start = document.querySelector('#start');
+    const vr = document.querySelector('#vr');
+    const status = document.querySelector('#status');
+    const progress = document.querySelector('#progress');
+    let game, ready = false, immersive = false, installPrompt;
+    const showError = message => {
+      const error = document.querySelector('#error');
+      error.textContent = message;
+      error.hidden = false;
+      console.error(message);
+    };
+    const begin = () => {
+      if (!game || !ready) return;
+      const resume = game.Module.llamatronResumeAudio;
+      if (resume) resume().catch(showError);
+      game.SendMessage('Standalone simulation', 'StartGame');
+      document.querySelector('#welcome').hidden = true;
+      canvas.focus();
+    };
+    window.addEventListener('llamatron-ready', () => {
+      ready = true;
+      status.textContent = 'Ready. Select Start to enable sound and play.';
+      progress.hidden = true;
+      start.disabled = !game;
+    });
+    window.addEventListener('llamatron-xr', event => {
+      immersive = event.detail.immersive;
+      vr.hidden = !event.detail.supported && !immersive;
+      vr.disabled = !game || !ready;
+      vr.textContent = immersive ? 'Exit VR' : 'Enter VR';
+    });
+    start.addEventListener('click', begin);
+    vr.addEventListener('click', () => {
+      if (!game || !ready) return;
+      if (!immersive) begin();
+      game.SendMessage('Standalone simulation', immersive ? 'ExitVR' : 'EnterVR');
+    });
+    document.querySelector('#fullscreen').addEventListener('click', () => {
+      if (game) game.SetFullscreen(1);
+      canvas.focus();
+    });
+    window.addEventListener('beforeinstallprompt', event => {
+      event.preventDefault(); installPrompt = event;
+      document.querySelector('#install').hidden = false;
+    });
+    document.querySelector('#install').addEventListener('click', async () => {
+      if (!installPrompt) return;
+      await installPrompt.prompt();
+      installPrompt = null;
+      document.querySelector('#install').hidden = true;
+    });
+    const loader = document.createElement('script');
+    loader.src = 'Build/{{{ LOADER_FILENAME }}}';
+    loader.onload = () => createUnityInstance(canvas, {
+      dataUrl: 'Build/{{{ DATA_FILENAME }}}',
+      frameworkUrl: 'Build/{{{ FRAMEWORK_FILENAME }}}',
+      codeUrl: 'Build/{{{ CODE_FILENAME }}}',
+      streamingAssetsUrl: 'StreamingAssets',
+      companyName: '{{{ COMPANY_NAME }}}',
+      productName: '{{{ PRODUCT_NAME }}}',
+      productVersion: '{{{ PRODUCT_VERSION }}}',
+      showBanner: (message, type) => { if (type === 'error') showError(message); else console.warn(message); }
+    }, value => { progress.value = value; }).then(instance => {
+      game = instance;
+      window.llamatron = instance;
+      start.disabled = !ready;
+      vr.disabled = !ready;
+      document.querySelector('#fullscreen').disabled = false;
+    }).catch(showError);
+    loader.onerror = () => showError('The game could not be downloaded. Reload to try again.');
+    document.body.appendChild(loader);
+    if ('serviceWorker' in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register('service-worker.js?v=__LLAMATRON_BUILD_ID__').catch(console.warn);
+    }
+  </script>
+</body>
+</html>

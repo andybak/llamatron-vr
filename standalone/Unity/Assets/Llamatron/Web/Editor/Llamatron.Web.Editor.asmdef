@@ -1,0 +1,7 @@
+{
+  "name": "Llamatron.Web.Editor",
+  "rootNamespace": "Llamatron.Web.Editor",
+  "references": ["WebXR", "Unity.XR.Management", "Unity.XR.Management.Editor"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true
+}

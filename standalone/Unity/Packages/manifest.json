@@ -1,5 +1,13 @@
 {
+  "scopedRegistries": [
+    {
+      "name": "OpenUPM",
+      "url": "https://package.openupm.com",
+      "scopes": ["com.de-panther"]
+    }
+  ],
   "dependencies": {
+    "com.de-panther.webxr": "0.19.0",
     "com.unity.inputsystem": "1.14.2",
     "com.unity.xr.management": "4.5.4",
     "com.unity.xr.openxr": "1.17.1",

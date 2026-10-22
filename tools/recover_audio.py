@@ -38,6 +38,8 @@ def main():
         if not frames or offset + frames > len(memory):
             parser.error(f'Sample {sample} requires {max(0, offset + frames - len(bank))} observed tail bytes; supply --reference-memory from probe_reference_audio.py')
         pcm = memory[offset:offset + frames]
+        # Web builds use these exact unsigned bytes instead of AAC-transcoded clips.
+        (args.output / f'sample-{sample:02d}-pcm.bytes').write_bytes(pcm)
         target = args.output / f'sample-{sample:02d}.wav'
         with wave.open(str(target), 'wb') as writer:
             writer.setparams((1, 1, base_hz, 0, 'NONE', 'not compressed'))

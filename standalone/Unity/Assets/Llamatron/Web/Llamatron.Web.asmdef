@@ -1,0 +1,7 @@
+{
+  "name": "Llamatron.Web",
+  "rootNamespace": "Llamatron.Web",
+  "references": ["WebXR", "Unity.XR.Management"],
+  "includePlatforms": ["Editor", "WebGL"],
+  "autoReferenced": true
+}

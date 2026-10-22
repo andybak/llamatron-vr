@@ -1,0 +1,13 @@
+{
+  "id": "./",
+  "name": "Llamatron VR",
+  "short_name": "Llamatron",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#070d10",
+  "theme_color": "#102126",
+  "icons": [
+    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}

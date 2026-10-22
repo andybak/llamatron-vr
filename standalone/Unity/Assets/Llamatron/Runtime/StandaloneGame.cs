@@ -8,6 +8,9 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
 using UnityEngine.XR;
 using UnityEngine.XR.Management;
+#if UNITY_WEBGL && !UNITY_EDITOR
+using Llamatron.Web;
+#endif
 using CommonUsages = UnityEngine.XR.CommonUsages;
 
 namespace Llamatron.Unity
@@ -36,6 +39,9 @@ namespace Llamatron.Unity
         private bool smoke;
         private int smokeTicks = 120;
         private InputAction headPosition, headRotation, headTracking;
+#if UNITY_WEBGL && !UNITY_EDITOR
+        private BrowserPlatform browser;
+#endif
 
         private IEnumerator Start()
         {
@@ -46,6 +52,11 @@ namespace Llamatron.Unity
             arena.Initialize(library);
             sampledAudio = gameObject.AddComponent<SampledAudio>(); sampledAudio.Initialize();
             CreateHud(arena.ArenaBounds);
+#if UNITY_WEBGL && !UNITY_EDITOR
+            browser = gameObject.AddComponent<BrowserPlatform>();
+            yield return browser.Initialize(view);
+            while (!browser.Started) yield return null;
+#else
             if (!smoke && !HasArgument("--desktop"))
             {
                 XRManagerSettings manager = XRGeneralSettings.Instance != null ? XRGeneralSettings.Instance.Manager : null;
@@ -75,6 +86,7 @@ namespace Llamatron.Unity
                     else Debug.LogWarning("[LLUNITY] OpenXR initialization unavailable; using desktop camera.");
                 }
             }
+#endif
             if (!Restart()) yield break;
             ready = true;
             Debug.Log($"[LLUNITY] Standalone ready; XR={xr}; sprites={library.graphics.Length}; irqHz={clock.InterruptHz:F6}; displayHz={clock.DisplayHz}; DOS runtime dependencies=0");
@@ -126,16 +138,26 @@ namespace Llamatron.Unity
             UnityEngine.XR.InputDevice left = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
             UnityEngine.XR.InputDevice right = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
             bool restart = Button(left, CommonUsages.primaryButton) || Button(right, CommonUsages.primaryButton);
+#if UNITY_WEBGL && !UNITY_EDITOR
+            restart |= browser.RestartPressed;
+            xr = browser.Immersive;
+#endif
             bool ended = campaign.Phase == CampaignPhase.GameOver || campaign.Phase == CampaignPhase.Menu;
             if ((keyboard != null && keyboard.rKey.wasPressedThisFrame) || (restart && !previousRestart && (ended || fault != null))) Restart();
             previousRestart = restart;
             if (keyboard != null && keyboard.pKey.wasPressedThisFrame) paused = !paused;
+#if !UNITY_WEBGL || UNITY_EDITOR
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && !xr) Application.Quit();
+#endif
             campaign.Paused = paused;
             if (!systemPaused && !skipNextDelta && fault == null)
             {
                 byte input = smoke ? (byte)0 : ReadInput(keyboard, left, right, twinStick || ((int)playMode & 3) == 3);
                 byte secondary = smoke ? (byte)0 : ReadSecondaryInput(keyboard, right);
+#if UNITY_WEBGL && !UNITY_EDITOR
+                input |= browser.Primary(twinStick || ((int)playMode & 3) == 3);
+                secondary |= browser.Secondary();
+#endif
                 bool acceptContinue = !smoke && (restart || (input & 128) != 0);
                 try
                 {
@@ -231,15 +253,27 @@ namespace Llamatron.Unity
         }
 
         private static bool Button(UnityEngine.XR.InputDevice device, InputFeatureUsage<bool> usage) => device.TryGetFeatureValue(usage, out bool value) && value;
-        private static bool HasArgument(string value) => Array.IndexOf(Environment.GetCommandLineArgs(), value) >= 0;
+        private static bool HasArgument(string value)
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            return false;
+#else
+            return Array.IndexOf(Environment.GetCommandLineArgs(), value) >= 0;
+#endif
+        }
         private static string ArgumentValue(string value)
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            return null;
+#else
             string[] args = Environment.GetCommandLineArgs(); int index = Array.IndexOf(args, value);
             return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
+#endif
         }
 
         private void Capture(string path)
         {
+#if !UNITY_WEBGL || UNITY_EDITOR
             var target = new RenderTexture(1280, 800, 24); var pixels = new Texture2D(1280, 800, TextureFormat.RGB24, false);
             RenderTexture previous = RenderTexture.active; RenderTexture oldTarget = view.targetTexture;
             view.targetTexture = target; view.Render(); RenderTexture.active = target;
@@ -248,15 +282,18 @@ namespace Llamatron.Unity
             view.targetTexture = oldTarget; RenderTexture.active = previous;
             target.Release(); Destroy(target); Destroy(pixels);
             Debug.Log($"[LLUNITY] Captured {full}");
+#endif
         }
 
         private void OnDestroy()
         {
             headPosition?.Dispose(); headRotation?.Dispose(); headTracking?.Dispose();
+#if !UNITY_WEBGL || UNITY_EDITOR
             if (xr && XRGeneralSettings.Instance != null)
             {
                 XRGeneralSettings.Instance.Manager.StopSubsystems(); XRGeneralSettings.Instance.Manager.DeinitializeLoader();
             }
+#endif
         }
     }
 }
