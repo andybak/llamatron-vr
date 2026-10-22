@@ -47,6 +47,7 @@ namespace Llamatron.Core
         public TrailHistory SecondaryTrail { get; }
         public PlayerMotionState PrimaryMotion { get; } = new PlayerMotionState(false);
         public PlayerMotionState SecondaryMotion { get; } = new PlayerMotionState(true);
+        public DroidControl Droid { get; } = new DroidControl();
         public event Action<ushort>? PaletteSequenceRequested;
         // Event arguments are original AL, CL, CH, without guessing mixer roles.
         public event Action<byte, byte, byte>? SoundRequested;

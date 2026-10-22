@@ -236,6 +236,19 @@ namespace Llamatron.Core
         public static System.Collections.Generic.IReadOnlyList<ushort> WipeColors { get; } =
             System.Array.AsReadOnly(new ushort[] { 1, 2, 11, 4 });
     }
+    public static class OriginalDroidData
+    {
+        public static System.Collections.Generic.IReadOnlyList<short> FireX { get; } =
+            System.Array.AsReadOnly(new short[] { -3, 3, -3, 3 });
+        public static System.Collections.Generic.IReadOnlyList<short> FireY { get; } =
+            System.Array.AsReadOnly(new short[] { -3, -3, 3, 3 });
+        public static System.Collections.Generic.IReadOnlyList<short> Sprites { get; } =
+            System.Array.AsReadOnly(new short[] { 32, 31, 31, 32 });
+        public static System.Collections.Generic.IReadOnlyList<short> AimMasks { get; } =
+            System.Array.AsReadOnly(new short[] { 5, 9, 6, 10 });
+        public const short InitialAimCountdown = 20;
+        public const short InitialTargetRecord = -1;
+    }
     public static class OriginalTiming
     {
         // IBM PIT input clock reference: DOSBox-X include/timer.h, PIT_TICK_RATE_IBM.

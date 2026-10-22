@@ -12,11 +12,14 @@ using CommonUsages = UnityEngine.XR.CommonUsages;
 
 namespace Llamatron.Unity
 {
+    public enum PlayMode { Solo = 0, Droid = 1, TwoPlayers = 3 }
+
     public sealed class StandaloneGame : MonoBehaviour
     {
         public Camera view;
         public float displayHz = 70; // Provisional VGA retrace rate; independent of the recovered PIT clock.
         public PaletteEffects paletteEffects = PaletteEffects.Full;
+        public PlayMode playMode;
         private GameSimulation game;
         private GameCampaign campaign;
         private GameClock clock;
@@ -102,7 +105,7 @@ namespace Llamatron.Unity
             }
             var random = new System.Random(smoke ? 12345 : Environment.TickCount);
             sampledAudio.Driver.StopAll();
-            game = new GameSimulation(RandomSequence.Shuffle(() => (ushort)random.Next(65536)), waveIndex: waveNumber - 1,
+            game = new GameSimulation(RandomSequence.Shuffle(() => (ushort)random.Next(65536)), waveIndex: waveNumber - 1, playerFlags: (byte)playMode,
                                       scripts: waveScripts, sound: sampledAudio.Driver);
             game.Palette.Effects = paletteEffects;
             arena.ApplyPalette(game.Palette);

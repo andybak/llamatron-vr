@@ -823,6 +823,29 @@ freeze-dependent threshold and the separate 140 comparison.
    headset visual validation. The user separately confirmed the preceding PC VR
    camera fix, controls and arena presentation were acceptable.
 
+## Original droid control
+
+1. `DroidControl` ports CS:176c-181a and CS:480e-495e. It follows the first
+   eligible herd record among slots 0..68, spends a movement opportunity acquiring
+   that record, and otherwise follows the primary trail companion. Movement is
+   evaluated on even IRQ counters and scales signed deltas to at most two X pixels
+   and one Y pixel. Freeze resets the target without stopping the aim countdown.
+2. Aim is recalculated every 21 calls from four quadrant byte counts. The source
+   counts active records with a nonzero word at +10, chooses the first greatest
+   count and retains its empty-field fallthrough into records 71..74. It does not
+   substitute nearest-enemy targeting. Recovered firing tables and initial words
+   are generated alongside the wave data.
+3. `tools/probe_reference_droid.py` executes the original helpers in an owned
+   runtime and verifies the code regions before changing fixture state. With
+   droid position (180,104), trail companion (80,60) and one hostile at (100,50),
+   original and port both produce position (178,103), velocity (-2,-1), firing
+   vector (-3,-3), sprite 32, aim mask 5, target -2 and countdown 20.
+4. The existing secondary-player sprite bank also renders the droid; its previous
+   unsupported exception is removed. Portable checks cover the captured vector,
+   acquisition delay and freeze boundary. Droid is selectable on the Unity game
+   component. Unity compiled the droid code; live droid gameplay and original
+   demo/menu integration still require validation.
+
 ## Remaining obligations
 
 1. Extend the working REA DOS analysis across the remaining indirect handlers and

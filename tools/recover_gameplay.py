@@ -165,6 +165,12 @@ def recover(original, motion_resource):
                          "Default": words(0x2144, 16), "Sequences": words(0x06c9, 61),
                          "Cycle": words(0x0658, 16),
                          "WipeColors": list(image[DATA_SEGMENT * 16 + 0x0619:DATA_SEGMENT * 16 + 0x061d])},
+        "droid_data": {"FireX": list(struct.unpack_from('<4b', image, DATA_SEGMENT * 16 + 0x068c)),
+                       "FireY": list(struct.unpack_from('<4b', image, DATA_SEGMENT * 16 + 0x0690)),
+                       "Sprites": list(image[DATA_SEGMENT * 16 + 0x0694:DATA_SEGMENT * 16 + 0x0698]),
+                       "AimMasks": list(image[DATA_SEGMENT * 16 + 0x0698:DATA_SEGMENT * 16 + 0x069c]),
+                       "InitialAimCountdown": words(0x0682, 1, True)[0],
+                       "InitialTargetRecord": words(0x0919, 1, True)[0]},
         "death_rotation": list(struct.unpack_from("<4b", image, DATA_SEGMENT * 16 + 0x654)),
         "kill_score_calls": [{"ax": words(0x2054 + i * 4, 1)[0],
                               "column": words(0x2056 + i * 4, 1)[0]}
@@ -284,6 +290,14 @@ def main():
             payload = ", ".join(str(value) for value in values)
             lines.append(f"        public static System.Collections.Generic.IReadOnlyList<ushort> {name} {{ get; }} =")
             lines.append(f"            System.Array.AsReadOnly(new ushort[] {{ {payload} }});")
+        lines.extend(["    }", "    public static class OriginalDroidData", "    {"])
+        for name, values in report["droid_data"].items():
+            if isinstance(values, int):
+                lines.append(f"        public const short {name} = {values};")
+            else:
+                payload = ", ".join(str(value) for value in values)
+                lines.append(f"        public static System.Collections.Generic.IReadOnlyList<short> {name} {{ get; }} =")
+                lines.append(f"            System.Array.AsReadOnly(new short[] {{ {payload} }});")
         lines.extend(["    }", "    public static class OriginalTiming", "    {",
                       "        // IBM PIT input clock reference: DOSBox-X include/timer.h, PIT_TICK_RATE_IBM.",
                       "        public const int PitInputHz = 1193182;",

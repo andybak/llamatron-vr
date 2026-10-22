@@ -96,8 +96,6 @@ namespace Llamatron.Core
 
         private void Player(ActorContext state, bool second)
         {
-            if (second && (state.Spawning.PlayerFlags & 2) == 0)
-                throw new NotSupportedException("Droid rendering is not ported yet.");
             short x = second ? state.Spawning.SecondPlayerX : state.Spawning.PlayerX;
             short y = second ? state.Spawning.SecondPlayerY : state.Spawning.PlayerY;
             short facing = (second ? state.SecondaryMotion : state.PrimaryMotion).Facing;

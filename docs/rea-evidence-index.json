@@ -2310,6 +2310,104 @@
       }
     },
     {
+      "record": "artifacts/reconstruction/rea-droid-176c-code.json",
+      "record_sha256": "8fa908c24248d8b328bbc4b2adb74e7a7a9b533aa7891fc2d9fbdbbecb660366",
+      "evidence_id": "ev_f3b8a03ed73fe6e42e75a35fe12bffc81e9b89f4d77164a95e72bd9408271c37",
+      "operation": "procedure_pseudo_code",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "input_sha256": "6a945c353dd537ea14057280c690dda4ada24433c3ac6415fcb7b64719e7df73",
+      "input_kind": "analysis-only header entry hint",
+      "provenance": "artifacts/reconstruction/GAME86.entry-176c.provenance.json",
+      "original_unpacked_sha256": "01affeab643b1513e652b750c16a1b9d11d88566dca083537173bc2f15055444",
+      "unchanged_load_image_sha256": "4c720f99692a6e7b1ade5d1d67bcdfc0837e7cca857c88fe8f0966ad30741094",
+      "hint_cs_offset": "0x176c"
+    },
+    {
+      "record": "artifacts/reconstruction/rea-droid-176c-function.json",
+      "record_sha256": "c6381fa7cc375095cff1c8b92f0a64dc3512f8337889275d004bbee010b6db26",
+      "evidence_id": "ev_ccd1521d18ead4adca0e6de050f82495c687330e068829930d67d97f86026079",
+      "operation": "analyze_function",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "input_sha256": "6a945c353dd537ea14057280c690dda4ada24433c3ac6415fcb7b64719e7df73",
+      "input_kind": "analysis-only header entry hint",
+      "provenance": "artifacts/reconstruction/GAME86.entry-176c.provenance.json",
+      "original_unpacked_sha256": "01affeab643b1513e652b750c16a1b9d11d88566dca083537173bc2f15055444",
+      "unchanged_load_image_sha256": "4c720f99692a6e7b1ade5d1d67bcdfc0837e7cca857c88fe8f0966ad30741094",
+      "hint_cs_offset": "0x176c",
+      "function": "0x1176c",
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x1176c",
+            "end": "0x1181a"
+          }
+        ],
+        "total_bytes": 175,
+        "span_bytes": 175,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    {
+      "record": "artifacts/reconstruction/rea-droid-480e-code.json",
+      "record_sha256": "06bc4eb031c29375af06b60cd461e3d5a2aa3fa5de1e934ca6e5a0dac632c1e5",
+      "evidence_id": "ev_eeabe7690da143daa6e6899f519daf69580e961fb4928c37cfaa73642fc92d74",
+      "operation": "procedure_pseudo_code",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "input_sha256": "065b0cc7d405d96bdfe1e5e104f95966bbf13c8f17b731d88499bcbaa65adc4c",
+      "input_kind": "analysis-only header entry hint",
+      "provenance": "artifacts/reconstruction/GAME86.entry-480e.provenance.json",
+      "original_unpacked_sha256": "01affeab643b1513e652b750c16a1b9d11d88566dca083537173bc2f15055444",
+      "unchanged_load_image_sha256": "4c720f99692a6e7b1ade5d1d67bcdfc0837e7cca857c88fe8f0966ad30741094",
+      "hint_cs_offset": "0x480e"
+    },
+    {
+      "record": "artifacts/reconstruction/rea-droid-480e-function.json",
+      "record_sha256": "15448dcc0f0f592e959262dfe38f7867b3d13e77dd75ac38ae8a829652cd034d",
+      "evidence_id": "ev_381cafd1fa06980666dd64350a265947b28610bfc7fb662fc176ec4f96effe3a",
+      "operation": "analyze_function",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "input_sha256": "065b0cc7d405d96bdfe1e5e104f95966bbf13c8f17b731d88499bcbaa65adc4c",
+      "input_kind": "analysis-only header entry hint",
+      "provenance": "artifacts/reconstruction/GAME86.entry-480e.provenance.json",
+      "original_unpacked_sha256": "01affeab643b1513e652b750c16a1b9d11d88566dca083537173bc2f15055444",
+      "unchanged_load_image_sha256": "4c720f99692a6e7b1ade5d1d67bcdfc0837e7cca857c88fe8f0966ad30741094",
+      "hint_cs_offset": "0x480e",
+      "function": "0x1480e",
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x1480e",
+            "end": "0x1495e"
+          }
+        ],
+        "total_bytes": 337,
+        "span_bytes": 337,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    {
       "record": "artifacts/reconstruction/rea-edge-2bb6-code.json",
       "record_sha256": "4ca19ec8ef3661119e8fec83c37f5043451f1ad63de1c2eab81daaa7f51efc05",
       "evidence_id": "ev_4e77e60a947bcd5568c7ba976ed30b66a89ee2f3b60c7add8f7141ab662c2a9b",

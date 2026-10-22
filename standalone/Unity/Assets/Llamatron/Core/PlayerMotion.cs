@@ -23,12 +23,11 @@ namespace Llamatron.Core
         private static short Word(int value) => unchecked((short)value);
 
         // CS:16c1-1a00. Input bits: up=1, down=2, left=4, right=8, lock=128.
-        // This ports human single/twin-stick/two-player motion, not demo/droid AI.
+        // Human single/twin-stick/two-player and the original droid path.
         public static void Step(ActorContext context, byte primary, byte secondary, bool twinStick)
         {
-            if (context.ScriptedMode != 0 ||
-                ((context.Spawning.PlayerFlags & 1) != 0 && (context.Spawning.PlayerFlags & 2) == 0))
-                throw new NotSupportedException("Original scripted/droid movement is not ported yet.");
+            if (context.ScriptedMode != 0)
+                throw new NotSupportedException("Original scripted demo movement is not ported yet.");
 
             SpawnContext spawn = context.Spawning;
             PlayerMotionState first = context.PrimaryMotion, second = context.SecondaryMotion;
@@ -40,6 +39,7 @@ namespace Llamatron.Core
                 MoveData(second, secondMask);
                 MoveSecondary(spawn, second);
             }
+            else if ((spawn.PlayerFlags & 1) != 0) context.Droid.Step(context);
             if (twinStick)
             {
                 first.AimMask = (short)(secondary & 15);
