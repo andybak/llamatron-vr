@@ -786,6 +786,43 @@ freeze-dependent threshold and the separate 140 comparison.
    production, not speaker/headset audibility or original-machine timing parity.
    Android XR rebuilt with the known Pipeline package exception; Quest is pending.
 
+## Palette effects and wave wipes
+
+1. `PaletteState` ports the VGA full-load path at CS:1be6, IRQ color-one cycle
+   at CS:3e4e and display color-zero sequence at CS:e946. Six-bit DAC values,
+   zero terminators, nonzero black delay words, cancellation and the byte-sized
+   palette reload counter retain their original behavior. The initial zero
+   countdown underflows; subsequent reloads occur every 30 display calls.
+2. `tools/probe_reference_palette.py` selects full effects (DS:0589=2) in an
+   owned original runtime, disables only its gameplay callback and captures seven
+   verified CS:e9c0 BIOS inputs for sequence DS:0713. The successful trace is
+   `artifacts/reconstruction/reference-palette-20261022T084152`. A first diagnostic
+   capture with effects disabled did not reach the palette breakpoint and is not
+   color-sequence evidence. Single-register BIOS writes use DH/CH/CL as red/green/
+   blue; full-block writes use RGB triples. The game maps its low/middle nibbles
+   differently between those paths. The implementation preserves that quirk.
+   BIOS argument ordering is supported by the
+   [DOSBox-X implementation](https://dosbox-x.com/doxygen/html/int10_8cpp_source.html).
+3. The generated `atlas-indices.png` retains all original four-bit indices and
+   independent sprite masks. A per-arena palette texture colors sprites,
+   transformed rows and beam lines. Background flashes affect the arena floor;
+   the surrounding VR environment remains black. The floor grid remains a Unity
+   presentation addition. Effects can be set to None, Cycle or Full on the game
+   component; Full is the preview default, while the supplied DOS fixture disables
+   effects unless the probe explicitly selects them.
+4. `WipeStep` and the renderer port CS:06e8/072d/6112/619c: 48 colored expanding
+   rectangles followed by 47 black rectangles, using the recovered four-color
+   cycle and original 2x2 pixel blocks. The final expansion spans X=0..319,
+   Y=8..199; erasure leaves the outermost border. Gameplay does not advance during
+   the wipe. In Unity, the retained game frame is flattened onto the arena while
+   these original pixel writes replace it.
+5. Portable checks match the captured BIOS colors, IRQ/display separation,
+   cancellation and reload boundaries, and all 95 wipe steps. Existing core
+   checks and the bounded 100-wave sweep pass. Unity compiled the palette code
+   and baked all 407 indexed sprite meshes. These changes have not yet received
+   headset visual validation. The user separately confirmed the preceding PC VR
+   camera fix, controls and arena presentation were acceptable.
+
 ## Remaining obligations
 
 1. Extend the working REA DOS analysis across the remaining indirect handlers and

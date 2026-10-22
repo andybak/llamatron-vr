@@ -4999,6 +4999,153 @@
       }
     },
     {
+      "record": "artifacts/reconstruction/rea-palette-e960-code.json",
+      "record_sha256": "5b8de9854355cd2bf319e2d4111947207cb4bd6283ed5806836105f83506a735",
+      "evidence_id": "ev_7bc121dc66d97d7dba5dfa30d38f62432a9169a9400eac4da95a6e83a0b360c8",
+      "operation": "procedure_pseudo_code",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "input_sha256": "d171ac041d6b191c88379e1f1c3eaf482c70c433e075bf23ba3382fd93328ff0",
+      "input_kind": "analysis-only header entry hint",
+      "provenance": "artifacts/reconstruction/GAME86.entry-e960.provenance.json",
+      "original_unpacked_sha256": "01affeab643b1513e652b750c16a1b9d11d88566dca083537173bc2f15055444",
+      "unchanged_load_image_sha256": "4c720f99692a6e7b1ade5d1d67bcdfc0837e7cca857c88fe8f0966ad30741094",
+      "hint_cs_offset": "0xe960"
+    },
+    {
+      "record": "artifacts/reconstruction/rea-palette-e960-function.json",
+      "record_sha256": "60f91b5f7a9c089bfe80161279324c510437602eed88e82344af23114709fa05",
+      "evidence_id": "ev_9fe238af823dcac83874339e10d4096f82a38da95be7965f5cb4f774d41ab4af",
+      "operation": "analyze_function",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "input_sha256": "d171ac041d6b191c88379e1f1c3eaf482c70c433e075bf23ba3382fd93328ff0",
+      "input_kind": "analysis-only header entry hint",
+      "provenance": "artifacts/reconstruction/GAME86.entry-e960.provenance.json",
+      "original_unpacked_sha256": "01affeab643b1513e652b750c16a1b9d11d88566dca083537173bc2f15055444",
+      "unchanged_load_image_sha256": "4c720f99692a6e7b1ade5d1d67bcdfc0837e7cca857c88fe8f0966ad30741094",
+      "hint_cs_offset": "0xe960",
+      "function": "0x1e960",
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x1e960",
+            "end": "0x1eacb"
+          }
+        ],
+        "total_bytes": 364,
+        "span_bytes": 364,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    {
+      "record": "artifacts/reconstruction/rea-parity-6112-code.json",
+      "record_sha256": "1cec4f54d00b8baf9a50f9c37ba7f99285168cca989de11d5e4e65d5c23ae7f5",
+      "evidence_id": "ev_045b935d4fbe39d9a03643e11b680d722b81f8678309f3c9d5f7fe9171adaf92",
+      "operation": "procedure_pseudo_code",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "input_sha256": "51c00cae5849218a05e89733d136c8b79cfd72c432559515e5ea54f366a352d7",
+      "input_kind": "analysis-only header entry hint",
+      "provenance": "artifacts/reconstruction/GAME86.entry-6112.provenance.json",
+      "original_unpacked_sha256": "01affeab643b1513e652b750c16a1b9d11d88566dca083537173bc2f15055444",
+      "unchanged_load_image_sha256": "4c720f99692a6e7b1ade5d1d67bcdfc0837e7cca857c88fe8f0966ad30741094",
+      "hint_cs_offset": "0x6112"
+    },
+    {
+      "record": "artifacts/reconstruction/rea-parity-6112-function.json",
+      "record_sha256": "f0ea9c8ea7d3e64bc4a01fc09d6f59f6dd10957f78de5060d32d34fcfae3a622",
+      "evidence_id": "ev_53fcf02dfd85c7cc42636889de157e32f3ab8718c1b50e5420fef00b7ccba349",
+      "operation": "analyze_function",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "input_sha256": "51c00cae5849218a05e89733d136c8b79cfd72c432559515e5ea54f366a352d7",
+      "input_kind": "analysis-only header entry hint",
+      "provenance": "artifacts/reconstruction/GAME86.entry-6112.provenance.json",
+      "original_unpacked_sha256": "01affeab643b1513e652b750c16a1b9d11d88566dca083537173bc2f15055444",
+      "unchanged_load_image_sha256": "4c720f99692a6e7b1ade5d1d67bcdfc0837e7cca857c88fe8f0966ad30741094",
+      "hint_cs_offset": "0x6112",
+      "function": "0x16112",
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x16112",
+            "end": "0x16193"
+          }
+        ],
+        "total_bytes": 130,
+        "span_bytes": 130,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    {
+      "record": "artifacts/reconstruction/rea-parity-619c-code.json",
+      "record_sha256": "1166e6a54d98976adab855db0c72741b18c4286247b3c57484dd677291e035ca",
+      "evidence_id": "ev_5102090d385ab9b6e2b2a8f1d7ce8441ed28faa619358c43ed2971acc27c3d48",
+      "operation": "procedure_pseudo_code",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "input_sha256": "9a0d3e2085e6151bef19fb73375be936cd28a0ed19a982bfd71257e4f669894b",
+      "input_kind": "analysis-only header entry hint",
+      "provenance": "artifacts/reconstruction/GAME86.entry-619c.provenance.json",
+      "original_unpacked_sha256": "01affeab643b1513e652b750c16a1b9d11d88566dca083537173bc2f15055444",
+      "unchanged_load_image_sha256": "4c720f99692a6e7b1ade5d1d67bcdfc0837e7cca857c88fe8f0966ad30741094",
+      "hint_cs_offset": "0x619c"
+    },
+    {
+      "record": "artifacts/reconstruction/rea-parity-619c-function.json",
+      "record_sha256": "c347c9a8c099bc61ca602f7bab9dc82b1eb6604d8b87a756aac2036744e34d09",
+      "evidence_id": "ev_011da7cd7e9a0b28bf68fcde11c852fdcced862927a0c31cd8e3972e02ded194",
+      "operation": "analyze_function",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "input_sha256": "9a0d3e2085e6151bef19fb73375be936cd28a0ed19a982bfd71257e4f669894b",
+      "input_kind": "analysis-only header entry hint",
+      "provenance": "artifacts/reconstruction/GAME86.entry-619c.provenance.json",
+      "original_unpacked_sha256": "01affeab643b1513e652b750c16a1b9d11d88566dca083537173bc2f15055444",
+      "unchanged_load_image_sha256": "4c720f99692a6e7b1ade5d1d67bcdfc0837e7cca857c88fe8f0966ad30741094",
+      "hint_cs_offset": "0x619c",
+      "function": "0x1619c",
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x1619c",
+            "end": "0x161d8"
+          }
+        ],
+        "total_bytes": 61,
+        "span_bytes": 61,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    {
       "record": "artifacts/reconstruction/rea-player-hit-code.json",
       "record_sha256": "ad1422f81cbec8f21284514cce9420a9366c37d91395e99d09e10934752cff90",
       "evidence_id": "ev_8e58104b33772a10e6e70cc70f926662fa3e3a0980dc7ae3fac86d1af6ce0537",

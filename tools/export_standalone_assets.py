@@ -30,6 +30,7 @@ def main():
     while height < y + row_height:
         height *= 2
     atlas = Image.new("RGBA", (width, height))
+    index_atlas = Image.new("RGBA", (width, height))
     records = []
     for item, left, top in placements:
         source = args.sprites / item["bank"] / f"{item['id']}.png"
@@ -39,11 +40,21 @@ def main():
                 raise ValueError(f"Sprite dimensions disagree with manifest: {source}")
             atlas.paste(rgba, (left, top))
             pixel_hash = hashlib.sha256(rgba.tobytes()).hexdigest()
+            with Image.open(source.with_name(f"{item['id']}.indices.png")) as indices:
+                if indices.size != rgba.size:
+                    raise ValueError(f"Palette-index dimensions disagree: {source}")
+                values = list(indices.convert("L").getdata())
+                if any(value > 15 for value in values):
+                    raise ValueError(f"Invalid original palette index: {source}")
+                encoded = Image.new("RGBA", rgba.size)
+                encoded.putdata([(value, 0, 0, pixel[3]) for value, pixel in zip(values, rgba.getdata())])
+                index_atlas.paste(encoded, (left, top))
         records.append({"bank": 0x118C if item["bank"] == "main" else 0x20EB,
                         "offset": item["offset"], "width": item["width"], "height": item["height"],
                         "x": left, "y": height - top - item["height"], "pixelSha256": pixel_hash})
     args.output.mkdir(parents=True, exist_ok=True)
     atlas.save(args.output / "atlas.png")
+    index_atlas.save(args.output / "atlas-indices.png")
     palette = manifest["palette_rgb"]
     if len(palette) != 16 or any(len(color) != 3 or any(not 0 <= component <= 255 for component in color) for color in palette):
         raise ValueError("Expected sixteen source palette RGB triples")

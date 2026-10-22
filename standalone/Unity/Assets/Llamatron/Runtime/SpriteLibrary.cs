@@ -22,6 +22,7 @@ namespace Llamatron.Unity
     public sealed class SpriteLibrary : ScriptableObject
     {
         public Texture2D atlas;
+        public Texture2D indexAtlas;
         public Material material;
         public SpriteGraphic[] graphics;
         public Color32[] palette;

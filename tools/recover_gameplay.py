@@ -51,6 +51,7 @@ ANCHORS = {
     0x1F3F: "8b442883e001",
     0x60C5: "ba2a04bf4141",
     0x29AF: "8b1e13048a874141",
+    0xE960: "833ec70600745c",
 }
 
 
@@ -160,6 +161,10 @@ def recover(original, motion_resource):
         "directional_tables": {"Quadrants": list(image[DATA_SEGMENT * 16 + 0x084a:DATA_SEGMENT * 16 + 0x084e]),
                                "X": words(0x084e, 8, True), "Y": words(0x085e, 8, True)},
         "announcement_sprites": words(0x063C, 10),
+        "palette_data": {"Ramp": list(image[DATA_SEGMENT * 16 + 0x2134:DATA_SEGMENT * 16 + 0x2144]),
+                         "Default": words(0x2144, 16), "Sequences": words(0x06c9, 61),
+                         "Cycle": words(0x0658, 16),
+                         "WipeColors": list(image[DATA_SEGMENT * 16 + 0x0619:DATA_SEGMENT * 16 + 0x061d])},
         "death_rotation": list(struct.unpack_from("<4b", image, DATA_SEGMENT * 16 + 0x654)),
         "kill_score_calls": [{"ax": words(0x2054 + i * 4, 1)[0],
                               "column": words(0x2056 + i * 4, 1)[0]}
@@ -274,6 +279,11 @@ def main():
             payload = ", ".join(str(value) for value in values)
             lines.append(f"        public static System.Collections.Generic.IReadOnlyList<short> {name} {{ get; }} =")
             lines.append(f"            System.Array.AsReadOnly(new short[] {{ {payload} }});")
+        lines.extend(["    }", "    public static class OriginalPaletteData", "    {"])
+        for name, values in report["palette_data"].items():
+            payload = ", ".join(str(value) for value in values)
+            lines.append(f"        public static System.Collections.Generic.IReadOnlyList<ushort> {name} {{ get; }} =")
+            lines.append(f"            System.Array.AsReadOnly(new ushort[] {{ {payload} }});")
         lines.extend(["    }", "    public static class OriginalTiming", "    {",
                       "        // IBM PIT input clock reference: DOSBox-X include/timer.h, PIT_TICK_RATE_IBM.",
                       "        public const int PitInputHz = 1193182;",

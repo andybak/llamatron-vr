@@ -223,6 +223,19 @@ namespace Llamatron.Core
         public static System.Collections.Generic.IReadOnlyList<short> Y { get; } =
             System.Array.AsReadOnly(new short[] { 0, 1, 1, 1, 0, -1, -1, -1 });
     }
+    public static class OriginalPaletteData
+    {
+        public static System.Collections.Generic.IReadOnlyList<ushort> Ramp { get; } =
+            System.Array.AsReadOnly(new ushort[] { 0, 8, 16, 24, 32, 40, 48, 56, 4, 12, 20, 28, 36, 44, 52, 63 });
+        public static System.Collections.Generic.IReadOnlyList<ushort> Default { get; } =
+            System.Array.AsReadOnly(new ushort[] { 0, 1589, 1792, 1872, 1904, 3380, 192, 124, 119, 199, 547, 7, 1287, 1909, 1911, 1365 });
+        public static System.Collections.Generic.IReadOnlyList<ushort> Sequences { get; } =
+            System.Array.AsReadOnly(new ushort[] { 1911, 0, 1911, 4096, 1904, 4096, 1799, 4096, 1792, 4096, 112, 4096, 7, 4096, 1911, 4096, 1904, 4096, 1799, 4096, 1792, 4096, 112, 4096, 7, 0, 1911, 1365, 819, 273, 0, 1792, 4096, 1280, 4096, 1904, 0, 1792, 1904, 1136, 116, 119, 7, 0, 1911, 4096, 1911, 0, 1911, 0, 1911, 7, 1365, 7, 819, 7, 273, 7, 1799, 7, 0 });
+        public static System.Collections.Generic.IReadOnlyList<ushort> Cycle { get; } =
+            System.Array.AsReadOnly(new ushort[] { 1911, 1799, 1559, 1319, 1079, 839, 599, 359, 119, 374, 629, 884, 1139, 1378, 1649, 1904 });
+        public static System.Collections.Generic.IReadOnlyList<ushort> WipeColors { get; } =
+            System.Array.AsReadOnly(new ushort[] { 1, 2, 11, 4 });
+    }
     public static class OriginalTiming
     {
         // IBM PIT input clock reference: DOSBox-X include/timer.h, PIT_TICK_RATE_IBM.

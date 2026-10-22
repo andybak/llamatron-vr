@@ -116,6 +116,14 @@ namespace Llamatron.Editor
             importer.npotScale = TextureImporterNPOTScale.None;
             importer.SaveAndReimport();
             Texture2D atlas = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Generated}/atlas.png");
+            string indexPath = $"{Generated}/atlas-indices.png";
+            AssetDatabase.ImportAsset(indexPath, ImportAssetOptions.ForceSynchronousImport);
+            var indexImporter = (TextureImporter)AssetImporter.GetAtPath(indexPath);
+            indexImporter.isReadable = true; indexImporter.mipmapEnabled = false; indexImporter.sRGBTexture = false;
+            indexImporter.filterMode = FilterMode.Point; indexImporter.wrapMode = TextureWrapMode.Clamp;
+            indexImporter.textureCompression = TextureImporterCompression.Uncompressed;
+            indexImporter.npotScale = TextureImporterNPOTScale.None;
+            indexImporter.SaveAndReimport();
             AtlasManifest manifest = JsonUtility.FromJson<AtlasManifest>(File.ReadAllText($"{Generated}/atlas.json"));
             string path = $"{Generated}/SpriteLibrary.asset";
             SpriteLibrary library = AssetDatabase.LoadAssetAtPath<SpriteLibrary>(path);
@@ -125,6 +133,7 @@ namespace Llamatron.Editor
             Shader shader = Shader.Find("Llamatron/PixelSprite");
             if (shader == null) throw new InvalidOperationException("[LLUNITY] PixelSprite shader missing.");
             library.atlas = atlas;
+            library.indexAtlas = AssetDatabase.LoadAssetAtPath<Texture2D>(indexPath);
             library.material = new Material(shader) { name = "Pixel sprites", mainTexture = atlas, enableInstancing = true };
             AssetDatabase.AddObjectToAsset(library.material, library);
             library.graphics = manifest.sprites;

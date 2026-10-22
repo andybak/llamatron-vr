@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Llamatron.Core;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -21,7 +22,13 @@ namespace Llamatron.Unity
         private readonly Color32[] effects = new Color32[320 * 200];
         private Texture2D effectTexture;
         private Renderer effectRenderer;
-        private Material effectMaterial, floorMaterial;
+        private Material effectMaterial, floorMaterial, spriteMaterial;
+        private Texture2D paletteTexture;
+        private readonly Color32[] palettePixels = new Color32[16];
+        private int paletteRevision = -1;
+        private PaletteState appliedPalette;
+        private readonly List<SpriteCommand> lastCommands = new List<SpriteCommand>(192);
+        private bool wiping;
         private Texture2D floorTexture;
         private float floorTop;
         public Bounds ArenaBounds { get; private set; }
@@ -29,7 +36,11 @@ namespace Llamatron.Unity
         public void Initialize(SpriteLibrary sprites)
         {
             library = sprites;
-            atlasPixels = library.atlas.GetPixels32();
+            if (library.indexAtlas == null) throw new InvalidOperationException("[LLPALETTE] Regenerate and bake the indexed sprite atlas.");
+            atlasPixels = library.indexAtlas.GetPixels32();
+            paletteTexture = new Texture2D(16, 1, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+            spriteMaterial = new Material(library.material) { mainTexture = library.indexAtlas };
+            spriteMaterial.SetFloat("_Indexed", 1); spriteMaterial.SetTexture("_Palette", paletteTexture);
             floorTexture = new Texture2D(320, 200, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
             var grid = new Color32[320 * 200];
             for (int y = 0; y < 200; y++) for (int x = 0; x < 320; x++)
@@ -39,22 +50,40 @@ namespace Llamatron.Unity
             }
             floorTexture.SetPixels32(grid); floorTexture.Apply(false, true);
             floorMaterial = new Material(library.material) { mainTexture = floorTexture };
+            floorMaterial.SetFloat("_ArenaFloor", 1);
             GameObject floor = Plane("Arena", floorMaterial, 0.65f);
             ArenaBounds = floor.GetComponent<Renderer>().bounds;
             floorTop = ArenaBounds.max.y;
-            effectTexture = new Texture2D(320, 200, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
-            effectMaterial = new Material(library.material) { mainTexture = effectTexture };
+            effectTexture = new Texture2D(320, 200, TextureFormat.RGBA32, false, true) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+            effectMaterial = new Material(spriteMaterial) { mainTexture = effectTexture };
             effectRenderer = Plane("Original pixel effects", effectMaterial, floorTop + 0.07f).GetComponent<Renderer>();
             visuals = new Visual[192];
             for (int i = 0; i < visuals.Length; i++)
             {
                 var go = new GameObject($"Sprite {i}", typeof(MeshFilter), typeof(MeshRenderer));
                 go.transform.SetParent(transform, false);
-                var renderer = go.GetComponent<MeshRenderer>(); renderer.sharedMaterial = library.material;
+                var renderer = go.GetComponent<MeshRenderer>(); renderer.sharedMaterial = spriteMaterial;
                 renderer.shadowCastingMode = ShadowCastingMode.Off; renderer.receiveShadows = false; renderer.enabled = false;
                 visuals[i] = new Visual { transform = go.transform, filter = go.GetComponent<MeshFilter>(), renderer = renderer };
             }
         }
+
+        public void ApplyPalette(PaletteState palette)
+        {
+            if (ReferenceEquals(appliedPalette, palette) && paletteRevision == palette.Revision) return;
+            appliedPalette = palette;
+            paletteRevision = palette.Revision;
+            for (int i = 0; i < 16; i++)
+            {
+                PaletteState.Color color = palette[i];
+                palettePixels[i] = new Color32(Expand(color.Red), Expand(color.Green), Expand(color.Blue), 255);
+            }
+            paletteTexture.SetPixels32(palettePixels); paletteTexture.Apply(false, false);
+            floorMaterial.SetColor("_Background", ((Color)palettePixels[0]).linear);
+        }
+
+        // Match VGA DAC bit expansion, preserving all six component bits.
+        private static byte Expand(byte value) => (byte)((value << 2) | (value >> 4));
 
         private GameObject Plane(string label, Material material, float y)
         {
@@ -68,6 +97,8 @@ namespace Llamatron.Unity
 
         public void Present(SpriteFrame frame)
         {
+            wiping = false;
+            lastCommands.Clear(); lastCommands.AddRange(frame.Commands);
             Array.Clear(effects, 0, effects.Length);
             int count = 0;
             foreach (SpriteCommand command in frame.Commands)
@@ -90,9 +121,36 @@ namespace Llamatron.Unity
             effectTexture.SetPixels32(effects); effectTexture.Apply(false, false);
         }
 
+        public void PresentWipe(WipeStep step)
+        {
+            if (!wiping)
+            {
+                wiping = true;
+                Array.Clear(effects, 0, effects.Length);
+                foreach (Visual visual in visuals) visual.renderer.enabled = false;
+                // Retain the last drawn game frame as a flat indexed image while
+                // the original 2x2-pixel rectangle writes replace its pixels.
+                foreach (SpriteCommand command in lastCommands)
+                {
+                    if (command.IsLine) RasterLine(command);
+                    else RasterRows(library.Find(command.Offset), command);
+                }
+            }
+            void Block(int x, int y)
+            {
+                Color32 color = new Color32(step.ColorIndex, 0, 0, 255);
+                for (int dy = 0; dy < 2; dy++) for (int dx = 0; dx < 2; dx++)
+                    if (x + dx >= 0 && x + dx < 320 && y + dy >= 0 && y + dy < 200)
+                        effects[(199 - y - dy) * 320 + x + dx] = color;
+            }
+            for (int x = step.Left; x <= step.Right; x += 2) { Block(x, step.Top); Block(x, step.Bottom); }
+            for (int y = step.Top; y <= step.Bottom; y += 2) { Block(step.Left, y); Block(step.Right, y); }
+            effectTexture.SetPixels32(effects); effectTexture.Apply(false, false);
+        }
+
         private void RasterLine(SpriteCommand command)
         {
-            Color32 color = library.palette[command.ColorIndex];
+            Color32 color = new Color32(command.ColorIndex, 0, 0, 255);
             if (command.Y == command.EndY)
             {
                 if (command.Y < 0 || command.Y >= 200) return;
@@ -141,6 +199,8 @@ namespace Llamatron.Unity
             if (floorTexture) Destroy(floorTexture);
             if (effectMaterial) Destroy(effectMaterial);
             if (floorMaterial) Destroy(floorMaterial);
+            if (spriteMaterial) Destroy(spriteMaterial);
+            if (paletteTexture) Destroy(paletteTexture);
         }
     }
 }

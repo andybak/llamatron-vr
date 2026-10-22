@@ -8,6 +8,7 @@ namespace Llamatron.Core
     {
         public ActorContext Actors { get; }
         public BulletSystem Bullets { get; } = new BulletSystem();
+        public PaletteState Palette { get; } = new PaletteState();
         public WaveDefinition Wave { get; private set; }
         public short ObstacleRemaining = 7; // 07fe
         public short GroupRemaining = -1; // 08fa
@@ -100,7 +101,11 @@ namespace Llamatron.Core
 
         // CS:3e08 executes on IRQ 0 even when the selected update callback is a
         // no-op. The campaign owns polling separately from callback selection.
-        internal void PollInputTick() => Actors.FrameCounter = Word(Actors.FrameCounter + 1);
+        internal void PollInputTick()
+        {
+            Actors.FrameCounter = Word(Actors.FrameCounter + 1);
+            Palette.TickInterrupt(Actors.FrameCounter);
+        }
 
         internal void UpdateInterrupt(byte primary, byte secondary, bool twinStick, bool allowCleared)
         {

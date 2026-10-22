@@ -16,6 +16,7 @@ namespace Llamatron.Unity
     {
         public Camera view;
         public float displayHz = 70; // Provisional VGA retrace rate; independent of the recovered PIT clock.
+        public PaletteEffects paletteEffects = PaletteEffects.Full;
         private GameSimulation game;
         private GameCampaign campaign;
         private GameClock clock;
@@ -103,9 +104,12 @@ namespace Llamatron.Unity
             sampledAudio.Driver.StopAll();
             game = new GameSimulation(RandomSequence.Shuffle(() => (ushort)random.Next(65536)), waveIndex: waveNumber - 1,
                                       scripts: waveScripts, sound: sampledAudio.Driver);
+            game.Palette.Effects = paletteEffects;
+            arena.ApplyPalette(game.Palette);
             campaign = new GameCampaign(game);
             clock = new GameClock(displayHz);
             campaign.FrameReady += simulation => { frame.Build(simulation); arena.Present(frame); };
+            campaign.WipeReady += arena.PresentWipe;
             fault = null; paused = false; ticks = 0; captured = false; smokeFrameReady = false;
             campaign.TickDisplay(); UpdateHud();
             return true;
@@ -151,6 +155,7 @@ namespace Llamatron.Unity
             }
             skipNextDelta = false;
             paused = campaign.Paused;
+            arena.ApplyPalette(game.Palette);
             if (smoke) sampledAudio.ObserveOutput();
             UpdateHud();
             if (smoke && !captured && (smokeFrameReady || fault != null))

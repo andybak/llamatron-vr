@@ -4,6 +4,18 @@ namespace Llamatron.Core
 {
     public enum CampaignPhase { Playing, WaveClear, WipeExpand, WipeContract, WarpAudio, Continue, GameOver, Menu }
 
+    public readonly struct WipeStep
+    {
+        public readonly int Left, Top, Right, Bottom;
+        public readonly byte ColorIndex;
+        public WipeStep(int step, bool erase)
+        {
+            Left = 94 - step * 2; Top = 102 - step * 2;
+            Right = 224 + step * 2; Bottom = 104 + step * 2;
+            ColorIndex = erase ? (byte)0 : (byte)(OriginalPaletteData.WipeColors[step & 3] & 15);
+        }
+    }
+
     // Normal human campaign paths from CS:0625-0815. FrameReady is deliberately
     // raised BEFORE resolving outcomes: CS:0616 renders the final gameplay frame
     // before the main loop decrements lives or rebuilds the survivor stream.
@@ -18,6 +30,7 @@ namespace Llamatron.Core
         public short ContinueTimer { get; private set; } // 0623
         public bool Paused { get; set; }
         public event Action<GameSimulation>? FrameReady;
+        public event Action<WipeStep>? WipeReady;
         private bool sceneDrawn;
 
         public GameCampaign(GameSimulation simulation)
@@ -49,18 +62,22 @@ namespace Llamatron.Core
             {
                 case CampaignPhase.Playing:
                     FrameReady?.Invoke(Simulation);
+                    Simulation.Palette.TickDisplay(Simulation.Actors);
                     sceneDrawn = true;
                     ResolveOutcome();
                     return;
                 case CampaignPhase.WaveClear:
                     FrameReady?.Invoke(Simulation);
+                    Simulation.Palette.TickDisplay(Simulation.Actors);
                     sceneDrawn = true;
                     if (--TransitionTicks == 0) BeginWipe();
                     return;
                 case CampaignPhase.WipeExpand:
+                    WipeReady?.Invoke(new WipeStep(48 - TransitionTicks, false));
                     if (--TransitionTicks == 0) { Phase = CampaignPhase.WipeContract; TransitionTicks = 47; }
                     return;
                 case CampaignPhase.WipeContract:
+                    WipeReady?.Invoke(new WipeStep(47 - TransitionTicks, true));
                     if (--TransitionTicks == 0)
                     {
                         Simulation.AdvanceWave();
@@ -92,6 +109,7 @@ namespace Llamatron.Core
             if ((actors.Spawning.PlayerFlags & 4) != 0 || actors.ScriptedMode != 0)
                 throw new NotSupportedException("Alternating-player snapshots and demo campaign flow are not ported yet.");
             actors.RequestPaletteSequence(0);
+            Simulation.Palette.Reload(); // CS:062b restores the complete palette.
             switch (actors.Outcome)
             {
                 case 1: // CS:075c. Zero, rather than negative, ends the lives test.
@@ -133,6 +151,8 @@ namespace Llamatron.Core
 
         private void BeginWipe()
         {
+            Simulation.Actors.RequestPaletteSequence(0);
+            Simulation.Palette.Reload(); // CS:06c6-06cf.
             // CS:06e8 draws X=94,92,...,0 (48 steps). CS:072d draws
             // X=94,92,...,2 (47 steps), with no gameplay update in either loop.
             Phase = CampaignPhase.WipeExpand; TransitionTicks = 48;

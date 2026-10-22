@@ -18,6 +18,7 @@ static class Program
         RemainingRenderChecks.Run();
         WaveCoverageChecks.Run();
         SoundChecks.Run();
+        PaletteChecks.Run();
         var entity = new Entity();
         var bytes = new byte[Entity.ByteSize];
         for (int i = 0; i < bytes.Length; i++) bytes[i] = (byte)(i * 5);
