@@ -9,6 +9,7 @@ EditorBuildSettings:
     path: Assets/Llamatron/Scenes/Main.unity
     guid: c05e2a3b1d196e34ba7dfdaef5fbd1fc
   m_configObjects:
+    WebXR.Settings: {fileID: 11400000, guid: 7f5241eff7d5ec74c825dac4394c900a, type: 2}
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 926f19cfd42da6445b98bb90fc02fd7f, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: c1903ed08572c5b4184e276b6f9a6163, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 0c91fdfd44581ff4b8b4dd8a888edfd9, type: 2}
