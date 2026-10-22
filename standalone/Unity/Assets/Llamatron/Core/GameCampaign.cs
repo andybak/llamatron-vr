@@ -29,14 +29,19 @@ namespace Llamatron.Core
         public short ContinueCount { get; private set; } // 0621
         public short ContinueTimer { get; private set; } // 0623
         public bool Paused { get; set; }
+        public int ActivePlayer => (Simulation.Actors.Spawning.PlayerFlags & 0x10) != 0 ? 1 : 0;
+        public short OtherLives => otherPlayer?.Lives ?? 0;
         public event Action<GameSimulation>? FrameReady;
         public event Action<WipeStep>? WipeReady;
         private bool sceneDrawn;
+        private CampaignSnapshot? otherPlayer;
 
         public GameCampaign(GameSimulation simulation)
         {
             Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
             WaveNumber = simulation.Actors.Spawning.WaveIndex + 1;
+            if ((simulation.Actors.Spawning.PlayerFlags & 4) != 0)
+                otherPlayer = new CampaignSnapshot(simulation.Actors, null); // CS:046e -> 5336.
         }
 
         private static short Word(int value) => unchecked((short)value);
@@ -106,15 +111,15 @@ namespace Llamatron.Core
         {
             ActorContext actors = Simulation.Actors;
             if (actors.Outcome == 0) return;
-            if ((actors.Spawning.PlayerFlags & 4) != 0 || actors.ScriptedMode != 0)
-                throw new NotSupportedException("Alternating-player snapshots and demo campaign flow are not ported yet.");
+            if (actors.ScriptedMode != 0)
+                throw new NotSupportedException("Demo campaign flow is not ported yet.");
             actors.RequestPaletteSequence(0);
             Simulation.Palette.Reload(); // CS:062b restores the complete palette.
             switch (actors.Outcome)
             {
                 case 1: // CS:075c. Zero, rather than negative, ends the lives test.
                     actors.Lives = Word(actors.Lives - 1);
-                    if (actors.Lives != 0) { Retry(); return; }
+                    if (actors.Lives != 0 || (otherPlayer != null && otherPlayer.Lives != 0)) { Retry(); return; }
                     ContinueCredits = Word(ContinueCredits - 1);
                     if (ContinueCredits == 0) Phase = CampaignPhase.GameOver;
                     else
@@ -176,13 +181,24 @@ namespace Llamatron.Core
             if (ContinueCount < 0) { Phase = CampaignPhase.GameOver; return; }
             if (ContinueTimer >= 0) return;
             Simulation.Actors.Lives = 5;
+            if (otherPlayer != null) otherPlayer.Lives = 5; // CS:080d revives both campaign packets.
             Retry();
             Phase = CampaignPhase.Playing;
         }
 
         private void Retry()
         {
-            Simulation.RetryWave();
+            WaveDefinition survivors = Simulation.CaptureSurvivors();
+            if (otherPlayer != null && otherPlayer.Lives != 0)
+            {
+                var departing = new CampaignSnapshot(Simulation.Actors, survivors);
+                Simulation.Actors.Spawning.PlayerFlags ^= 0x10;
+                Simulation.ResumeCampaign(otherPlayer);
+                otherPlayer = departing;
+                Simulation.Actors.StartupTicks = 50;
+            }
+            else Simulation.RetrySurvivors(survivors);
+            WaveNumber = Simulation.Actors.Spawning.WaveIndex + 1;
             sceneDrawn = false;
             Paused = false;
         }

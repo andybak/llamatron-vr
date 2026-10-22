@@ -26,6 +26,23 @@ namespace Llamatron.Core
         public short Mode => this[0x21b0];
         internal void SetChaseLimits(short value) { words[0x21ac] = value; words[0x21ae] = value; }
 
+        // CS:5317 swaps only DS:21a6..226d. Parameters elsewhere remain shared.
+        internal Dictionary<ushort, short> CaptureCampaign()
+        {
+            var snapshot = new Dictionary<ushort, short>();
+            foreach (var item in words)
+                if (item.Key >= 0x21a6 && item.Key < 0x226e) snapshot.Add(item.Key, item.Value);
+            return snapshot;
+        }
+
+        internal void RestoreCampaign(Dictionary<ushort, short> snapshot)
+        {
+            var remove = new List<ushort>();
+            foreach (ushort key in words.Keys) if (key >= 0x21a6 && key < 0x226e) remove.Add(key);
+            foreach (ushort key in remove) words.Remove(key);
+            foreach (var item in snapshot) words.Add(item.Key, item.Value);
+        }
+
         // CS:0229-0243 and its eight handlers. Supply the completed wave-cycle
         // count (DS:233c), not the wave number. Sound cue delivery is explicit.
         public void Apply(WaveDefinition wave, int cycle, Action<byte> soundCue)

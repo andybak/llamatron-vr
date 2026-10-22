@@ -56,14 +56,29 @@ namespace Llamatron.Core
             }
             if ((uint)spawn.WaveIndex >= 100) throw new InvalidOperationException("Wave index does not address a recovered wave pointer.");
             Actors.Sound(0x15, 1, 30);
+            // CS:01f3-0205 runs for every new wave, but not survivor retries.
+            spawn.Parameters.ChaseReload = 15; Actors.ScoreRepeat = 0;
+            Actors.PermanentHotBullets = 0; Actors.HotBulletTimer = -1;
             StartWave(Scripts.Decode(spawn.WaveIndex), true);
         }
 
         public void RetryWave()
         {
-            WaveDefinition retry = WaveDefinition.FromSurvivors(Actors.Spawning.Pool, unchecked((byte)Actors.Spawning.Parameters.Mode));
+            WaveDefinition retry = CaptureSurvivors();
             StartWave(retry, false);
         }
+
+        internal WaveDefinition CaptureSurvivors() => WaveDefinition.FromSurvivors(Actors.Spawning.Pool,
+            unchecked((byte)Actors.Spawning.Parameters.Mode));
+
+        internal void ResumeCampaign(CampaignSnapshot snapshot)
+        {
+            snapshot.Restore(Actors);
+            if (snapshot.Survivors == null) AdvanceWave(); // CS:07a8: other player's first turn.
+            else StartWave(snapshot.Survivors, false);
+        }
+
+        internal void RetrySurvivors(WaveDefinition survivors) => StartWave(survivors, false);
 
         // CS:0455-055b, 05ed-0615. Reset only the fields actually written by
         // wave setup. In particular score, lives, random index, hot bullets,

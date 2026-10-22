@@ -5146,6 +5146,55 @@
       }
     },
     {
+      "record": "artifacts/reconstruction/rea-parity-5317-code.json",
+      "record_sha256": "b029c246d2f1cb671a2482e86359a9a1087cecedd247de80174086ed6d1191c0",
+      "evidence_id": "ev_6e9a99039fd18ffa60b1e5f645807aaf3c67a6c8e2a44fd6f21ad8d47924eb74",
+      "operation": "procedure_pseudo_code",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "input_sha256": "9e543abc79c98cb5b92bcf56450f37386fa1a65d8cb06d34be9e198707825a60",
+      "input_kind": "analysis-only header entry hint",
+      "provenance": "artifacts/reconstruction/GAME86.entry-5317.provenance.json",
+      "original_unpacked_sha256": "01affeab643b1513e652b750c16a1b9d11d88566dca083537173bc2f15055444",
+      "unchanged_load_image_sha256": "4c720f99692a6e7b1ade5d1d67bcdfc0837e7cca857c88fe8f0966ad30741094",
+      "hint_cs_offset": "0x5317"
+    },
+    {
+      "record": "artifacts/reconstruction/rea-parity-5317-function.json",
+      "record_sha256": "90ac09e25ee0bd100b577906bd103116a571646ea5762eff88179fe14b9ceb32",
+      "evidence_id": "ev_abb9aeb810a766a07e4ee60984e46ce5dadee3d6b5be516180e31af2693713c8",
+      "operation": "analyze_function",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "input_sha256": "9e543abc79c98cb5b92bcf56450f37386fa1a65d8cb06d34be9e198707825a60",
+      "input_kind": "analysis-only header entry hint",
+      "provenance": "artifacts/reconstruction/GAME86.entry-5317.provenance.json",
+      "original_unpacked_sha256": "01affeab643b1513e652b750c16a1b9d11d88566dca083537173bc2f15055444",
+      "unchanged_load_image_sha256": "4c720f99692a6e7b1ade5d1d67bcdfc0837e7cca857c88fe8f0966ad30741094",
+      "hint_cs_offset": "0x5317",
+      "function": "0x15317",
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x15317",
+            "end": "0x15335"
+          }
+        ],
+        "total_bytes": 31,
+        "span_bytes": 31,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    {
       "record": "artifacts/reconstruction/rea-parity-6112-code.json",
       "record_sha256": "1cec4f54d00b8baf9a50f9c37ba7f99285168cca989de11d5e4e65d5c23ae7f5",
       "evidence_id": "ev_045b935d4fbe39d9a03643e11b680d722b81f8678309f3c9d5f7fe9171adaf92",

@@ -92,8 +92,16 @@ automatic/spread firing, damage, scoring, herd rescue/following and
 collectible effects. The normal and rapid moving-spawner family now has its two spawns, three
 update handlers, two child generations and pickup-producing damage behavior.
 The campaign controller includes normal wave advancement, survivor retries, lives,
-continue countdown and game-over state. Alternating-player snapshots, attract/menu
-and high-score flow and original wipe graphics remain unfinished. Sampled audio
+continue countdown, game-over state and alternating-player campaign packets.
+The Unity component's Play Mode selects solo, droid or simultaneous human play,
+with optional alternating turns. Twin Stick separates primary movement and aim;
+I/J/K/L plus Right Ctrl, or the right controller stick/trigger, supplies the second
+input. Droid following and quadrant firing use the recovered original routines.
+Palette Effects selects None, Cycle or Full. Indexed sprites follow the live
+palette, and wave transitions use the recovered 48+47-step pixel wipe on the arena.
+Attract/menu and high-score flow remain unfinished. These additions have core
+checks and Unity compilation results, with live mode/visual parity still to verify.
+Sampled audio
 now uses the recovered single-voice queue, playback rates and priorities. Warp
 completion polls its active voice after the original minimum two retraces.
 All 32 clips are bundled; no original sample bank or sound driver is used at runtime.

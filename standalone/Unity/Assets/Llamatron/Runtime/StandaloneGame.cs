@@ -12,7 +12,7 @@ using CommonUsages = UnityEngine.XR.CommonUsages;
 
 namespace Llamatron.Unity
 {
-    public enum PlayMode { Solo = 0, Droid = 1, TwoPlayers = 3 }
+    public enum PlayMode { Solo = 0, Droid = 1, TwoPlayers = 3, Alternating = 4, AlternatingDroid = 5, AlternatingTwoPlayers = 7 }
 
     public sealed class StandaloneGame : MonoBehaviour
     {
@@ -20,6 +20,7 @@ namespace Llamatron.Unity
         public float displayHz = 70; // Provisional VGA retrace rate; independent of the recovered PIT clock.
         public PaletteEffects paletteEffects = PaletteEffects.Full;
         public PlayMode playMode;
+        public bool twinStick;
         private GameSimulation game;
         private GameCampaign campaign;
         private GameClock clock;
@@ -133,14 +134,15 @@ namespace Llamatron.Unity
             campaign.Paused = paused;
             if (!systemPaused && !skipNextDelta && fault == null)
             {
-                byte input = smoke ? (byte)0 : ReadInput(keyboard, left, right);
+                byte input = smoke ? (byte)0 : ReadInput(keyboard, left, right, twinStick || ((int)playMode & 3) == 3);
+                byte secondary = smoke ? (byte)0 : ReadSecondaryInput(keyboard, right);
                 bool acceptContinue = !smoke && (restart || (input & 128) != 0);
                 try
                 {
                     clock.Advance(Time.unscaledDeltaTime, () =>
                     {
                         sampledAudio.ServiceInterrupt();
-                        campaign.TickInterrupt(input, acceptContinue: acceptContinue); ticks++;
+                        campaign.TickInterrupt(input, secondary, twinStick, acceptContinue); ticks++;
                     }, () =>
                     {
                         sampledAudio.PollCompletion(); campaign.TickDisplay();
@@ -186,10 +188,11 @@ namespace Llamatron.Unity
                 campaign.Phase == CampaignPhase.WarpAudio ? "WARP" :
                 campaign.Phase != CampaignPhase.Playing ? "WAVE CLEARED" : "RECONSTRUCTION PREVIEW";
             arena.gameObject.SetActive(campaign.Phase != CampaignPhase.Continue && campaign.Phase != CampaignPhase.GameOver && campaign.Phase != CampaignPhase.Menu);
-            hud.text = $"LLAMATRON VR · WAVE {campaign.WaveNumber}\nSCORE {game.Actors.Scores.Value(0):D8}   LIVES {game.Actors.Lives}\n{status}";
+            string player = ((int)playMode & 4) != 0 ? $"PLAYER {campaign.ActivePlayer + 1} · " : "";
+            hud.text = $"LLAMATRON VR · WAVE {campaign.WaveNumber}\n{player}SCORE {game.Actors.Scores.Value(campaign.ActivePlayer):D8}   LIVES {game.Actors.Lives}\n{status}";
         }
 
-        private static byte ReadInput(Keyboard keyboard, UnityEngine.XR.InputDevice left, UnityEngine.XR.InputDevice right)
+        private static byte ReadInput(Keyboard keyboard, UnityEngine.XR.InputDevice left, UnityEngine.XR.InputDevice right, bool splitControllers)
         {
             byte input = 0;
             if (keyboard != null)
@@ -201,11 +204,29 @@ namespace Llamatron.Unity
                 if (keyboard.spaceKey.isPressed) input |= 128;
             }
             Vector2 axis = Vector2.zero;
-            if (!left.TryGetFeatureValue(CommonUsages.primary2DAxis, out axis) || axis.sqrMagnitude < 0.04f)
+            if ((!left.TryGetFeatureValue(CommonUsages.primary2DAxis, out axis) || axis.sqrMagnitude < 0.04f) && !splitControllers)
                 right.TryGetFeatureValue(CommonUsages.primary2DAxis, out axis);
             if (axis.y > 0.25f) input |= 1; if (axis.y < -0.25f) input |= 2;
             if (axis.x < -0.25f) input |= 4; if (axis.x > 0.25f) input |= 8;
-            if (Button(left, CommonUsages.triggerButton) || Button(right, CommonUsages.triggerButton)) input |= 128;
+            if (Button(left, CommonUsages.triggerButton) || (!splitControllers && Button(right, CommonUsages.triggerButton))) input |= 128;
+            return input;
+        }
+
+        private static byte ReadSecondaryInput(Keyboard keyboard, UnityEngine.XR.InputDevice right)
+        {
+            byte input = 0;
+            if (keyboard != null)
+            {
+                if (keyboard.iKey.isPressed) input |= 1; if (keyboard.kKey.isPressed) input |= 2;
+                if (keyboard.jKey.isPressed) input |= 4; if (keyboard.lKey.isPressed) input |= 8;
+                if (keyboard.rightCtrlKey.isPressed) input |= 128;
+            }
+            if (right.TryGetFeatureValue(CommonUsages.primary2DAxis, out Vector2 axis))
+            {
+                if (axis.y > 0.25f) input |= 1; if (axis.y < -0.25f) input |= 2;
+                if (axis.x < -0.25f) input |= 4; if (axis.x > 0.25f) input |= 8;
+            }
+            if (Button(right, CommonUsages.triggerButton)) input |= 128;
             return input;
         }
 

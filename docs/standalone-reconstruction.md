@@ -846,12 +846,35 @@ freeze-dependent threshold and the separate 140 comparison.
    component. Unity compiled the droid code; live droid gameplay and original
    demo/menu integration still require validation.
 
+## Alternating-player campaign packets
+
+1. CS:5317 swaps 100 words between DS:21a6 and DS:226e and toggles mode bit 10.
+   `CampaignSnapshot` exchanges the modeled fields in that block: lives, sprite
+   variant, wave, carried level parameters, score multiplier, love/announcement/
+   drop counters, difficulty increment and survivor stream. It leaves score
+   digits, random cursor, motion, actor storage, global cycle shift and parameters
+   outside the block shared, as in the source.
+2. The second player's first turn takes the original new-wave initialization
+   path; later turns rebuild that player's survivor groups. Dead packets are
+   skipped. Continue is offered only after both packets reach zero lives and
+   revives both before the normal swap. New-wave setup also now clears hot-shot
+   state and the score multiplier at CS:01f3-0205; survivor retries retain them.
+3. The Unity component exposes solo, droid and simultaneous-human modes with or
+   without alternating turns. Twin Stick separates movement from aiming. The
+   second input uses I/J/K/L and Right Ctrl on keyboard, or the right controller
+   stick/trigger. The HUD identifies the active campaign and displays its score.
+4. Portable checks cover the two players' lives, scores, wave/survivor recovery,
+   shared power-up words, eliminated-player skip and continue. The implementation
+   compiled cleanly in Unity. Full original-session differential replay and live
+   headset testing of these modes remain outstanding.
+
 ## Remaining obligations
 
 1. Extend the working REA DOS analysis across the remaining indirect handlers and
    retain their function evidence. Continue verifying and extending the mapping.
-2. Complete alternating-player campaign snapshots, original wipe/menu/high-score
-   presentation, droid/demo AI and original pause input. Exercise warp playback
+2. Complete original menu/high-score presentation, demo AI integration and original
+   pause input. Validate droid, alternating-player snapshots and wave wipes against
+   longer original sessions. Exercise warp playback
    end to end against the original, beyond the core status/retrace checks.
    Verify the connected normal
    frame implementation against original runtime traces, including rare effects.
@@ -865,7 +888,7 @@ freeze-dependent threshold and the separate 140 comparison.
    deterministic state traces against the original using the same inputs and
    captured random table. The recovered PIT rate and independent clocks are now
    implemented; the live timing observation does not establish state parity.
-5. Complete palettes, animations and transformed pixel effects; verify sampled sound in
+5. Validate the palette effects, animations and transformed pixel effects; verify sampled sound in
    the standalone asset pipeline. The 407 recovered sprites are packed and baked;
    supported actor/player/bullet drawing now emits standalone render commands.
    No original game file may
