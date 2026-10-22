@@ -1,8 +1,7 @@
 name: Windows ZIP
 
 on:
-  push:
-    branches: [main]
+  # Paused while the Unity version is developed; retain manual builds.
   workflow_dispatch:
 
 permissions:
