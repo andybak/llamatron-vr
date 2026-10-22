@@ -868,6 +868,24 @@ freeze-dependent threshold and the separate 140 comparison.
    compiled cleanly in Unity. Full original-session differential replay and live
    headset testing of these modes remain outstanding.
 
+## Scripted demo execution core
+
+1. `GameSimulation` can initialize the original three-wave demo counter and its
+   secondary working position. `PlayerMotion` now follows CS:181b-1884: run the
+   recovered droid helper, copy its movement/aim/position to the primary, record
+   the primary trail, and skip the human movement/clamping step. Every 64 IRQs,
+   demo movement can choose the original signed-random target around (160,100).
+2. Primary fire sets the demo counter to one and requests a clear. The campaign
+   runs the original eleven clear displays, decrements the scripted counter and
+   returns to menu at zero before starting a wipe. Non-final clears keep the
+   normal wipe/new-wave path. Existing scripted-mode score/contact suppression
+   remains connected.
+3. Portable checks verify signed target selection, position/aim copying without
+   an extra movement step, and the fire-to-menu boundary. This is the execution
+   core; automatic title/story/credits/demo rotation and its original presentation
+   are not integrated yet. The demo path has static instruction evidence and
+   core checks, without an original-demo session comparison.
+
 ## Remaining obligations
 
 1. Extend the working REA DOS analysis across the remaining indirect handlers and

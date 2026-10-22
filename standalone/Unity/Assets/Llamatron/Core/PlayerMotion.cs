@@ -26,9 +26,6 @@ namespace Llamatron.Core
         // Human single/twin-stick/two-player and the original droid path.
         public static void Step(ActorContext context, byte primary, byte secondary, bool twinStick)
         {
-            if (context.ScriptedMode != 0)
-                throw new NotSupportedException("Original scripted demo movement is not ported yet.");
-
             SpawnContext spawn = context.Spawning;
             PlayerMotionState first = context.PrimaryMotion, second = context.SecondaryMotion;
             int moveMask = primary & 15;
@@ -40,7 +37,21 @@ namespace Llamatron.Core
                 MoveSecondary(spawn, second);
             }
             else if ((spawn.PlayerFlags & 1) != 0) context.Droid.Step(context);
-            if (twinStick)
+            bool scripted = context.ScriptedMode != 0;
+            if (scripted)
+            {
+                // CS:181b-1884: the scripted primary uses the droid's movement
+                // and aim, then skips the final human movement/clamping path.
+                if ((primary & 128) != 0) { context.ScriptedMode = 1; context.Outcome = 2; }
+                context.Droid.Step(context);
+                first.FireX = second.FireX; first.FireY = second.FireY;
+                first.ProjectileSprite = second.ProjectileSprite; first.AimMask = second.AimMask;
+                first.Facing = second.Facing; first.MoveX = second.MoveX; first.MoveY = second.MoveY;
+                spawn.PlayerX = spawn.SecondPlayerX; spawn.PlayerY = spawn.SecondPlayerY;
+                moveMask = second.AimMask; Aim(first, moveMask);
+                first.TrailDirection = OriginalInputTables.TrailDirection[moveMask];
+            }
+            else if (twinStick)
             {
                 first.AimMask = (short)(secondary & 15);
                 Aim(first, secondary & 15);
@@ -50,7 +61,7 @@ namespace Llamatron.Core
                 first.AimMask = (short)moveMask;
                 Aim(first, moveMask);
             }
-            MoveData(first, moveMask);
+            if (!scripted) MoveData(first, moveMask);
 
             // Primary trail recording precedes primary movement; secondary
             // recording follows secondary movement, exactly as in the original.
@@ -59,6 +70,7 @@ namespace Llamatron.Core
             context.PrimaryTrail.Record(spawn.PlayerX, spawn.PlayerY, first.TrailDirection);
             if ((spawn.PlayerFlags & 1) != 0)
                 context.SecondaryTrail.Record(spawn.SecondPlayerX, spawn.SecondPlayerY, second.TrailDirection);
+            if (scripted) return;
             short x = Word(spawn.PlayerX + first.MoveX), y = Word(spawn.PlayerY + first.MoveY);
             if (x >= 15 && x < 304) spawn.PlayerX = x;
             if (y >= 18 && y < 188) spawn.PlayerY = y;

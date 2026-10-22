@@ -18,7 +18,7 @@ namespace Llamatron.Core
         private byte currentKind;
 
         public GameSimulation(RandomSequence random, int waveIndex = 0, byte playerFlags = 0, short cycle = 0,
-                              WaveScriptStore? scripts = null, SoundDriverState? sound = null)
+                              WaveScriptStore? scripts = null, SoundDriverState? sound = null, short demoWaves = 0)
         {
             if ((uint)waveIndex >= 100) throw new ArgumentOutOfRangeException(nameof(waveIndex));
             var parameters = new WaveParameters();
@@ -27,7 +27,8 @@ namespace Llamatron.Core
                 WaveIndex = (short)waveIndex, PlayerFlags = playerFlags, DifficultyIncrement = cycle,
                 PlayerX = (playerFlags & 1) != 0 ? (short)140 : (short)160
             };
-            Actors = new ActorContext(spawn) { CycleShift = cycle };
+            Actors = new ActorContext(spawn) { CycleShift = cycle, ScriptedMode = demoWaves };
+            if (demoWaves != 0) { spawn.SecondPlayerX = 172; spawn.SecondPlayerY = 140; }
             if (sound != null)
             {
                 Actors.SoundRequested += sound.Queue;

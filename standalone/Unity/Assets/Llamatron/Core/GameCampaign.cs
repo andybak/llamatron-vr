@@ -111,8 +111,6 @@ namespace Llamatron.Core
         {
             ActorContext actors = Simulation.Actors;
             if (actors.Outcome == 0) return;
-            if (actors.ScriptedMode != 0)
-                throw new NotSupportedException("Demo campaign flow is not ported yet.");
             actors.RequestPaletteSequence(0);
             Simulation.Palette.Reload(); // CS:062b restores the complete palette.
             switch (actors.Outcome)
@@ -156,6 +154,11 @@ namespace Llamatron.Core
 
         private void BeginWipe()
         {
+            if (Simulation.Actors.ScriptedMode != 0)
+            {
+                Simulation.Actors.ScriptedMode = Word(Simulation.Actors.ScriptedMode - 1);
+                if (Simulation.Actors.ScriptedMode == 0) { Phase = CampaignPhase.Menu; return; }
+            }
             Simulation.Actors.RequestPaletteSequence(0);
             Simulation.Palette.Reload(); // CS:06c6-06cf.
             // CS:06e8 draws X=94,92,...,0 (48 steps). CS:072d draws
