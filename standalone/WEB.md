@@ -49,11 +49,15 @@ prove immersive stereo, controller or audio behavior on physical headsets.
    uses the `github-pages` environment and the workflow token's Pages/OIDC
    permissions. The expected project URL is
    `https://andybak.github.io/llamatron-vr/`.
-3. Configure repository secrets `UNITY_EMAIL`, `UNITY_PASSWORD`, and either
-   `UNITY_LICENSE` (an activated CI license file) or `UNITY_SERIAL` (a suitable
-   paid license). Follow [GameCI activation](https://game.ci/docs/github/activation/).
-   A local Editor activation is not automatically available to GitHub runners.
-   The workflow fails early with a setup message when credentials are missing.
+3. Licensing follows [Open Brush's build workflow](https://github.com/icosa-foundation/open-brush/blob/main/.github/workflows/build.yml):
+   without a custom license it uses the same public Personal license and test
+   account. The license is stored in `tools/ci/unity-personal.ulf`; provenance is
+   documented beside it. This path does not require repository secrets.
+   To override it, set `UNITY_LICENSE` or `UNITY_SERIAL`, plus `UNITY_PASSWORD`
+   and `UNITY_EMAIL` (a secret or repository variable). Incomplete custom
+   credentials fail early. See [GameCI activation](https://game.ci/docs/github/activation/)
+   for custom licenses. Compatibility with this project's Editor version still
+   needs a successful GitHub build.
 4. CI uses Unity 6000.3.18f1 on a GitHub-hosted Linux runner and calls
    `Llamatron.Editor.StandaloneBuild.BuildWebCi`. It bakes the generated sprite
    library and makes a release build with Gzip decompression fallback. It does

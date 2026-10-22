@@ -44,17 +44,33 @@ jobs:
           ref: ${{ matrix.sha }}
           persist-credentials: false
 
-      - name: Check Unity CI credentials
+      - name: Select Unity build license
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL || vars.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
         run: |
-          if [[ -z "$UNITY_EMAIL" || -z "$UNITY_PASSWORD" || ( -z "$UNITY_LICENSE" && -z "$UNITY_SERIAL" ) ]]; then
-            echo '::error::Configure UNITY_EMAIL, UNITY_PASSWORD and either UNITY_LICENSE or UNITY_SERIAL repository secrets. See standalone/WEB.md.'
-            exit 1
+          if [[ -n "$UNITY_SERIAL" || -n "$UNITY_LICENSE" ]]; then
+            if [[ -z "$UNITY_EMAIL" || -z "$UNITY_PASSWORD" ]]; then
+              echo '::error::A custom Unity license requires UNITY_EMAIL and UNITY_PASSWORD. See standalone/WEB.md.'
+              exit 1
+            fi
+          else
+            # Same public Personal-license fallback as Open Brush's build workflow.
+            UNITY_EMAIL='unitytest@mikeage.net'
+            UNITY_PASSWORD='DoNotStealThis1'
+            UNITY_LICENSE=$(cat tools/ci/unity-personal.ulf)
           fi
+          delimiter="UNITY_LICENSE_$(cat /proc/sys/kernel/random/uuid)"
+          {
+            echo "UNITY_EMAIL=$UNITY_EMAIL"
+            echo "UNITY_PASSWORD=$UNITY_PASSWORD"
+            echo "UNITY_SERIAL=$UNITY_SERIAL"
+            echo "UNITY_LICENSE<<$delimiter"
+            echo "$UNITY_LICENSE"
+            echo "$delimiter"
+          } >> "$GITHUB_ENV"
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
@@ -65,12 +81,7 @@ jobs:
           python tools/prepare_unity_web.py
 
       - name: Build Unity WebGL release
-        uses: game-ci/unity-builder@4423ee75828dff56037d1d1cfdac6b68e3a6ba00 # v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        uses: game-ci/unity-builder@adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1 # v5
         with:
           projectPath: standalone/Unity
           unityVersion: 6000.3.18f1
