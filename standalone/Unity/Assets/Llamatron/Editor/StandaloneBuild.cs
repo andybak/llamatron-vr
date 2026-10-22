@@ -188,10 +188,21 @@ namespace Llamatron.Editor
         public static void BuildWindows() => Build(BuildTarget.StandaloneWindows64, "windows/LlamatronStandalone.exe");
 
         [MenuItem("Llamatron/Build Web preview")]
-        public static void BuildWeb()
+        public static void BuildWeb() => BuildWeb(true);
+
+        // CI starts from source; generated Unity assets are intentionally ignored.
+        public static void BuildWebCi()
+        {
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            BakeSprites();
+            // Browser audio uses the raw PCM TextAssets, not Unity's WAV import.
+            BuildWeb(false);
+        }
+
+        private static void BuildWeb(bool development)
         {
             Llamatron.Web.Editor.WebBuildSetup.Configure();
-            Build(BuildTarget.WebGL, "web");
+            Build(BuildTarget.WebGL, "web", development);
             string workspace = Path.GetFullPath(Path.Combine(Application.dataPath, "../../.."));
             string output = Path.Combine(workspace, "artifacts/standalone/web");
             if (!File.Exists(Path.Combine(output, "index.html")))
@@ -239,7 +250,7 @@ namespace Llamatron.Editor
             AssetDatabase.SaveAssets();
             Debug.Log($"[LLUNITY] Android vendor: {(quest ? "Quest" : "Android XR")}; ARM64 IL2CPP Vulkan.");
         }
-        private static void Build(BuildTarget target, string filename)
+        private static void Build(BuildTarget target, string filename, bool development = true)
         {
             // OpenXR validation reads the selected settings group, even when
             // BuildPlayer is explicitly passed a different platform target.
@@ -253,7 +264,7 @@ namespace Llamatron.Editor
                 // The OpenXR vendor hooks mutate the generated Android manifest.
                 // A cached Gradle project can retain the previous vendor's intent
                 // category when these features switch in the same Editor session.
-                options = BuildOptions.Development | (target == BuildTarget.Android ? BuildOptions.CleanBuildCache : BuildOptions.None)
+                options = (development ? BuildOptions.Development : BuildOptions.None) | (target == BuildTarget.Android ? BuildOptions.CleanBuildCache : BuildOptions.None)
             });
             Debug.Log($"[LLUNITY] Build {target}: {report.summary.result}; errors={report.summary.totalErrors}; output={output}");
             if (report.summary.result != BuildResult.Succeeded) throw new InvalidOperationException($"[LLUNITY] {target} build failed.");

@@ -1,0 +1,161 @@
+name: Web release to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    if: github.event.deleted != true
+    runs-on: ubuntu-latest
+    outputs:
+      releases: ${{ steps.commits.outputs.releases }}
+      has_releases: ${{ steps.commits.outputs.has_releases }}
+      latest: ${{ steps.commits.outputs.latest }}
+    steps:
+      - id: commits
+        name: Find every marked commit in this push
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+          releases = [{'sha': c['id']} for c in event.get('commits', []) if '[RELEASE]' in c['message']]
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'releases={json.dumps({"include": releases})}\n')
+              output.write(f'has_releases={str(bool(releases)).lower()}\n')
+              output.write(f'latest={releases[-1]["sha"] if releases else ""}\n')
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.has_releases == 'true'
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix: ${{ fromJSON(needs.plan.outputs.releases) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ matrix.sha }}
+          persist-credentials: false
+
+      - name: Check Unity CI credentials
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        run: |
+          if [[ -z "$UNITY_EMAIL" || -z "$UNITY_PASSWORD" || ( -z "$UNITY_LICENSE" && -z "$UNITY_SERIAL" ) ]]; then
+            echo '::error::Configure UNITY_EMAIL, UNITY_PASSWORD and either UNITY_LICENSE or UNITY_SERIAL repository secrets. See standalone/WEB.md.'
+            exit 1
+          fi
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Recreate original sprite and PCM assets
+        run: |
+          python -m pip install Pillow==11.3.0
+          python tools/prepare_unity_web.py
+
+      - name: Build Unity WebGL release
+        uses: game-ci/unity-builder@4423ee75828dff56037d1d1cfdac6b68e3a6ba00 # v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: standalone/Unity
+          unityVersion: 6000.3.18f1
+          targetPlatform: WebGL
+          buildMethod: Llamatron.Editor.StandaloneBuild.BuildWebCi
+          versioning: None
+
+      - name: Verify complete web output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('artifacts/standalone/web')
+          assert (root / 'index.html').is_file(), 'Missing index.html'
+          assert '__LLAMATRON_BUILD_ID__' not in (root / 'index.html').read_text(), 'Unstamped build'
+          for name in json.loads((root / 'precache.json').read_text())['files']:
+              assert (root / name).exists(), f'Missing precached asset: {name}'
+          assert any((root / 'Build').glob('*.wasm*')), 'Missing WebAssembly player'
+          PY
+
+      - name: Retain each marked commit's web build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Web-${{ matrix.sha }}
+          path: artifacts/standalone/web
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+
+      # A Pages site has one live version: use the newest marked commit in the push.
+      - name: Upload newest marked build for Pages
+        if: matrix.sha == needs.plan.outputs.latest
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: artifacts/standalone/web
+
+      - name: Upload Unity logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Web-logs-${{ matrix.sha }}
+          path: |
+            standalone/Unity/Logs
+            artifacts/unity-web-input/audio-assets.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+  deploy:
+    needs: [plan, build]
+    if: needs.plan.outputs.has_releases == 'true'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    permissions:
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Keep an older slow build from replacing a newer deployment
+        id: order
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          publish=true
+          newer_runs=$(gh api --paginate "repos/$GH_REPO/actions/workflows/web-pages.yml/runs?branch=main&event=push&status=success&per_page=100" \
+            --jq ".workflow_runs[] | select(.run_number > $RUN_NUMBER) | .id")
+          for run in $newer_runs; do
+            deployed=$(gh api --paginate "repos/$GH_REPO/actions/runs/$run/jobs?per_page=100" \
+              --jq '.jobs[] | select(.name == "deploy" and .conclusion == "success") | .id')
+            if [[ -n "$deployed" ]]; then
+              publish=false
+              echo 'A newer release is already deployed; keeping that version live.'
+              break
+            fi
+          done
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+      - if: steps.order.outputs.publish == 'true'
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+      - name: Publish newest marked build
+        if: steps.order.outputs.publish == 'true'
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
