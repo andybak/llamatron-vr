@@ -194,6 +194,8 @@ namespace Llamatron.Editor
             Build(BuildTarget.WebGL, "web");
             string workspace = Path.GetFullPath(Path.Combine(Application.dataPath, "../../.."));
             string output = Path.Combine(workspace, "artifacts/standalone/web");
+            if (!File.Exists(Path.Combine(output, "index.html")))
+                throw new InvalidOperationException("[LLWEB] Unity reported a successful Web build but produced no index.html. Inspect the build errors; restart the Editor if Web Build Support was just installed.");
             string buildId = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
             foreach (string name in new[] { "index.html", "service-worker.js" })
             {
