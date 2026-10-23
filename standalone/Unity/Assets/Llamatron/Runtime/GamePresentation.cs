@@ -11,7 +11,7 @@ namespace Llamatron.Unity
     [DefaultExecutionOrder(-100)]
     public sealed class GamePresentation : MonoBehaviour
     {
-        [Serializable] private sealed class ScrollPage { public ScrollDraw[] draws; public int height; }
+        [Serializable] private sealed class ScrollPage { public ScrollDraw[] draws; public int height; public TitleParticleDefinition[] particles; }
         [Serializable] private sealed class ScrollDraw { public int x, y, color, sprite; public string text; }
         private const string ScoresKey = "LlamatronHighScores.v1";
         private StandaloneGame owner;
@@ -21,6 +21,8 @@ namespace Llamatron.Unity
         private readonly HighScoreNameEntry nameEntry = new HighScoreNameEntry();
         private ScrollPage scrollPage;
         private ScrollPage titlePage;
+        private TitleReveal title;
+        private bool skipTitleDelta;
         private Color32[] textPalette;
         private readonly Queue<(int player, uint score)> pendingScores = new Queue<(int, uint)>();
         private uint pendingScore;
@@ -37,6 +39,7 @@ namespace Llamatron.Unity
         public bool ActiveGameplay => Page == PresentationPage.Playing || Page == PresentationPage.Demo;
         public bool IsDemo => Page == PresentationPage.Demo;
         public bool HasPlayerGame => hasGame;
+        public bool PlaysPresentationAudio => Page == PresentationPage.GameOver || (Page == PresentationPage.Title && !hasGame);
         internal float ScrollOffset => scroll;
         internal void ToggleScrollPause() => scrollPaused = !scrollPaused;
 
@@ -46,6 +49,9 @@ namespace Llamatron.Unity
             persistScores = persistentScores;
             textPalette = library.palette;
             titlePage = JsonUtility.FromJson<ScrollPage>(Resources.Load<TextAsset>("Generated/OriginalTitleLayout").text);
+            title = new TitleReveal(owner.displayHz, titlePage.particles);
+            title.SoundRequested += (sample, rate, priority) => { if (!hasGame && !preview) owner.QueuePresentationSound(sample, rate, priority); };
+            title.ServiceAudio += () => { if (!hasGame && !preview) owner.ServicePresentationAudio(); };
             panel = new GameObject("Game presentation").AddComponent<PixelPanel>();
             panel.Initialize(owner.view, library, font.Font);
             byte[] initial = Resources.Load<TextAsset>("Generated/OriginalScores").bytes;
@@ -53,6 +59,11 @@ namespace Llamatron.Unity
             catch (Exception e) { Debug.LogWarning($"[LLPRESENT] Using initial high scores: {e.Message}"); scores = new HighScoreTable(initial); }
             textKeyboard = Keyboard.current;
             if (textKeyboard != null) textKeyboard.onTextInput += TextInput;
+            skipTitleDelta = true;
+        }
+        internal void BeginTitle()
+        {
+            if (Page == PresentationPage.Title) { title.Restart(); skipTitleDelta = true; }
         }
         private void OnDestroy()
         {
@@ -80,12 +91,19 @@ namespace Llamatron.Unity
             if (target == PresentationPage.NameEntry) { pendingScore = 400000; nameEntry.Reset("TEST"); }
             Show(target);
             preview = true;
+            if (target == PresentationPage.Title) PreviewTitle(217);
             if (target == PresentationPage.Story || target == PresentationPage.Guide) scroll = 400;
             else if (target == PresentationPage.Credits) scroll = 250;
+        }
+        internal void PreviewTitle(int ticks)
+        {
+            preview = true; title.Restart(); title.Advance((ticks + 0.25) / OriginalTiming.InterruptHz);
         }
         private void Show(PresentationPage page, bool auto = false)
         {
             Page = page; elapsed = scroll = 0; automatic = auto; preview = false; scrollPaused = false;
+            if (page == PresentationPage.Title) { title.Restart(); skipTitleDelta = true; }
+            if (!hasGame && !ActiveGameplay && page != PresentationPage.Title && page != PresentationPage.GameOver) owner.StopPresentationAudio();
             panel.Visible(!ActiveGameplay);
             if (!ActiveGameplay) panel.Position();
             if (page == PresentationPage.Story || page == PresentationPage.Credits || page == PresentationPage.Guide)
@@ -179,6 +197,8 @@ namespace Llamatron.Unity
             if (escape) { Menu(); return; }
             if (Page == PresentationPage.Title)
             {
+                if (skipTitleDelta) skipTitleDelta = false;
+                else title.Advance(Time.unscaledDeltaTime);
                 if (Mouse.current != null && Mouse.current.delta.ReadValue().sqrMagnitude > 0) elapsed = 0;
                 if ((pressed & 2) != 0 || (keyboard != null && keyboard.downArrowKey.wasPressedThisFrame)) { selection = (selection + 1) % 9; elapsed = 0; }
                 if ((pressed & 1) != 0 || (keyboard != null && keyboard.upArrowKey.wasPressedThisFrame)) { selection = (selection + 8) % 9; elapsed = 0; }
@@ -220,7 +240,16 @@ namespace Llamatron.Unity
             panel.Begin();
             if (Page == PresentationPage.Title)
             {
-                foreach (ScrollDraw draw in titlePage.draws) panel.Sprite(draw.sprite, 40 + draw.x, draw.y, 1, 0x118c);
+                for (int i = 0; i < titlePage.draws.Length; i++)
+                {
+                    if (!title.Visible(i)) continue;
+                    ScrollDraw draw = titlePage.draws[i];
+                    int spacing = title.RowSpacing(i);
+                    panel.SpriteRows(draw.sprite, 40 + draw.x, draw.y, spacing, spacing == 1 ? 0 : 1);
+                    if (spacing > 1) panel.SpriteRows(draw.sprite, 40 + draw.x, draw.y, spacing, -1);
+                }
+                foreach (TitleParticle particle in title.Particles)
+                    panel.CenteredSprite(particle.Sprite, 40 + particle.X, 314 - particle.Y * 0.5f, 276, 328);
             }
             else Text("LLAMATRON: 2112", 200, 14, Color.yellow, true);
             if (Page == PresentationPage.Title)

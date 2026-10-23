@@ -7,6 +7,16 @@
    displays a complete question-mark fallback instead of reading adjacent memory.
    The title logo uses its separate main-bank letter sprites, selected by
    DS:2118 and positioned at the original CS:402c horizontal spacing.
+   `TitleReveal` initializes the ten row-spacing counters to `128 + 16*i`,
+   decrements positive counters by two per IRQ and draws each visible letter
+   with both skew signs until it settles. CS:0124 installs CS:3f6f as the IRQ
+   callback; CS:012a installs CS:402c as the independent display callback.
+   Samples 21, 2, 20 and 17 retain their recovered rate/priority parameters.
+   The 32 idle beasties use CS:44d7/4571/4603 initialization, 16.16 physics,
+   reflections and direction-dependent animation. They occupy a separate lower
+   strip with half-height position travel so the menu controls remain readable.
+   Opening a menu over an existing game animates silently and preserves its save
+   and audio state.
 2. `tools/export_presentation_assets.py` exports the font, `SCORES.ORI`, and the
    original scroll layouts from the decoded image. Story starts at DS:14e1,
    credits at DS:117a, and the illustrated field guide at DS:1bc8. CS:5363-54f6
@@ -46,6 +56,8 @@
 1. `dotnet run --project standalone/Checks/Llamatron.Checks.csproj` covers ranking,
    score ties, eight-character names, eviction, binary persistence and corrupt
    score data alongside the existing gameplay/save checks.
+   Title checks cover exact IRQ landing boundaries, sound ordering, the hold
+   before idle motion, reflected beastie facing, and host-frame-rate independence.
 2. A native player accepts `--desktop --presentation-check` to exercise mode
    selection, suspended clocks, resume, paused saves, test-wave and load entry,
    the attract dispatch, and game-over/name-entry/high-score transitions. This
@@ -59,6 +71,7 @@
    captures a page through the real game camera. Other pages include Scores,
    NameEntry, Instructions, Story, Guide, Credits, GameOver and Demo. Scroll-page
    previews begin partway through their content to expose text and illustrations.
+   Add `--presentation-title-ticks N` to inspect a particular reveal/idle stage.
 4. Desktop renders of title, high scores, name entry, controls, illustrated story,
    field guide, credits, game over and running demo have been inspected. Native
    timed flow checks passed. A complete natural rotation also passed:

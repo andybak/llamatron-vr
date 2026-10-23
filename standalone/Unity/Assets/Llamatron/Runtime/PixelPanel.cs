@@ -8,7 +8,8 @@ namespace Llamatron.Unity
     // A scene surface, so menus share the player's camera and stereo rendering.
     public sealed class PixelPanel : MonoBehaviour
     {
-        private const int Width = 400, Height = 280;
+        private const int Width = 400, Height = 328;
+        private const float WorldWidth = 1.5f, WorldHeight = WorldWidth * Height / Width;
         private readonly Color32[] pixels = new Color32[Width * Height];
         private Texture2D texture;
         private Material material;
@@ -27,7 +28,7 @@ namespace Llamatron.Unity
             material.SetFloat("_Indexed", 0); material.SetFloat("_ArenaFloor", 0);
             var plane = GameObject.CreatePrimitive(PrimitiveType.Quad); plane.name = "Original presentation surface";
             Destroy(plane.GetComponent<Collider>()); plane.transform.SetParent(transform, false);
-            plane.transform.localScale = new Vector3(1.5f, 1.05f, 1);
+            plane.transform.localScale = new Vector3(WorldWidth, WorldHeight, 1);
             surface = plane.GetComponent<Renderer>(); surface.sharedMaterial = material;
             surface.shadowCastingMode = ShadowCastingMode.Off; surface.receiveShadows = false;
             Position();
@@ -46,7 +47,7 @@ namespace Llamatron.Unity
             var plane = new Plane(transform.forward, transform.position);
             if (!plane.Raycast(ray, out float distance)) return;
             Vector3 local = transform.InverseTransformPoint(ray.GetPoint(distance));
-            pointer = new Vector2((local.x / 1.5f + 0.5f) * Width, (0.5f - local.y / 1.05f) * Height);
+            pointer = new Vector2((local.x / WorldWidth + 0.5f) * Width, (0.5f - local.y / WorldHeight) * Height);
             click = Mouse.current.leftButton.wasPressedThisFrame;
         }
         public void End() { texture.SetPixels32(pixels); texture.Apply(false, false); }
@@ -95,6 +96,31 @@ namespace Llamatron.Unity
                     if (targetY >= clipTop && targetY < clipBottom) Pixel((int)x + column * scale + xx, targetY, color);
                 }
             }
+        }
+        public void SpriteRows(int offset, int left, int top, int spacing, int skew)
+        {
+            SpriteGraphic sprite = sprites.Find(offset, 0x118c);
+            if (sprite == null) return;
+            int halfY = (sprite.height - 1) >> 1;
+            int step = skew == 0 ? 0 : skew > 0 ? spacing : -spacing;
+            int x0 = left - halfY * step, y0 = top + halfY - halfY * spacing;
+            for (int row = 0; row < sprite.height; row++)
+            {
+                int y = y0 + row * spacing;
+                if (y < 0 || y >= 200) continue;
+                int source = (sprite.y + sprite.height - 1 - row) * sprites.atlas.width + sprite.x;
+                for (int x = 0; x < sprite.width; x++)
+                {
+                    int targetX = x0 + row * step + x;
+                    Color32 color = atlas[source + x];
+                    if (color.a >= 128 && targetX >= 40 && targetX < 360) Pixel(targetX, y, color);
+                }
+            }
+        }
+        public void CenteredSprite(int offset, float x, float y, int clipTop, int clipBottom)
+        {
+            SpriteGraphic sprite = sprites.Find(offset, 0x118c);
+            if (sprite != null) Sprite(offset, x - ((sprite.width - 1) >> 1), y - ((sprite.height - 1) >> 1), 1, 0x118c, clipTop, clipBottom);
         }
         private void OnDestroy() { if (texture != null) Destroy(texture); if (material != null) Destroy(material); }
     }

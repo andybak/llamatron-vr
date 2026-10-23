@@ -117,6 +117,7 @@ namespace Llamatron.Unity
 #if UNITY_WEBGL && !UNITY_EDITOR
             LLWebGameStarted();
 #endif
+            presentation.BeginTitle();
             PresentationChanged();
             if (HasArgument("--presentation-capture")) StartCoroutine(CapturePresentation());
             if (HasArgument("--presentation-check")) StartCoroutine(CheckPresentationFlow());
@@ -135,6 +136,12 @@ namespace Llamatron.Unity
         private IEnumerator CapturePresentation()
         {
             presentation.Preview(ArgumentValue("--presentation-page") ?? "Title");
+            if (HasArgument("--presentation-title-ticks"))
+            {
+                if (!int.TryParse(ArgumentValue("--presentation-title-ticks"), out int titleTicks) || titleTicks < 0 || titleTicks > 1000)
+                    throw new ArgumentException("--presentation-title-ticks requires 0 to 1000 IRQ ticks.");
+                presentation.PreviewTitle(titleTicks);
+            }
             yield return new WaitForSecondsRealtime(2);
             yield return null;
             yield return new WaitForEndOfFrame();
@@ -170,7 +177,10 @@ namespace Llamatron.Unity
             yield return new WaitForSecondsRealtime(0.1f);
             presentation.Menu(); long before = clock.InterruptCount;
             yield return new WaitForSecondsRealtime(0.1f);
+            byte[] menuSave = CaptureSave();
+            yield return new WaitForSecondsRealtime(5);
             if (clock.InterruptCount != before) throw new InvalidOperationException("Menu advanced the suspended game.");
+            if (!menuSave.AsSpan().SequenceEqual(CaptureSave())) throw new InvalidOperationException("Title animation changed the suspended game/audio save.");
             presentation.Activate(0); TogglePause();
             if (!GameSession.Load(CaptureSave()).Campaign.Paused) throw new InvalidOperationException("Pause was not captured immediately.");
             presentation.Menu(); presentation.Menu();
@@ -226,6 +236,7 @@ namespace Llamatron.Unity
 
         public bool BeginGame(PlayMode mode, bool splitAim, bool demonstration)
         {
+            StopPresentationAudio();
             playMode = demonstration ? PlayMode.Solo : mode;
             twinStick = !demonstration && splitAim;
             return Restart(demonstration);
@@ -271,6 +282,15 @@ namespace Llamatron.Unity
             sampledAudio.Driver.Queue(30, 1, 8); sampledAudio.Driver.Service();
         }
 
+        public void QueuePresentationSound(byte sample, byte rate, byte priority) => sampledAudio.Driver.Queue(sample, rate, priority);
+        public void ServicePresentationAudio() => sampledAudio.ServiceInterrupt();
+        private void RefreshAudioPause()
+        {
+            if (sampledAudio == null) return;
+            bool screenAudio = presentation != null && presentation.PlaysPresentationAudio;
+            sampledAudio.SetSystemPaused(systemPaused || (!screenAudio && (paused || (presentation != null && !presentation.ActiveGameplay))));
+        }
+
         public bool PresentationSoundPlaying
         {
             get { sampledAudio.PollCompletion(); return sampledAudio.Driver.ActiveSample != 0; }
@@ -279,7 +299,7 @@ namespace Llamatron.Unity
         public void PresentationChanged()
         {
             if (presentation == null) return;
-            sampledAudio.SetSystemPaused(systemPaused || paused || (!presentation.ActiveGameplay && presentation.Page != PresentationPage.GameOver));
+            RefreshAudioPause();
             hud.gameObject.SetActive(presentation.ActiveGameplay);
             if (presentation.ActiveGameplay) { skipNextDelta = true; UpdateHud(); }
             else arena.gameObject.SetActive(false);
@@ -455,7 +475,7 @@ namespace Llamatron.Unity
             if (!ready || (presentation != null && !presentation.ActiveGameplay)) return;
             paused = !paused;
             campaign.Paused = paused;
-            sampledAudio.SetSystemPaused(systemPaused || paused);
+            RefreshAudioPause();
             UpdateHud();
         }
 
@@ -541,7 +561,7 @@ namespace Llamatron.Unity
         {
             if (systemPaused && !pause) skipNextDelta = true;
             systemPaused = pause;
-            if (sampledAudio != null) sampledAudio.SetSystemPaused(pause || paused || (presentation != null && !presentation.ActiveGameplay && presentation.Page != PresentationPage.GameOver));
+            RefreshAudioPause();
         }
 
         private void UpdateHud()

@@ -21,7 +21,14 @@ def export(analysis, source, output):
         sprite = struct.unpack_from('<H', image, main + 0x1c + code * 2)[0]
         last_y, last_x = struct.unpack_from('<HH', image, main + sprite + 4)
         title.append(dict(x=50 + i * 24 - (last_x >> 1), y=20 - (last_y >> 1), color=15, sprite=sprite, text=''))
-    (output / 'OriginalTitleLayout.json').write_text(json.dumps(dict(draws=title, height=32)), encoding='utf-8')
+    particles = []
+    bases = struct.unpack_from('<4H', image, 0x25590 + 0x909)
+    for bp in range(31, -1, -1):
+        sine = int.from_bytes(image[0x25590 + 0x4141 + (bp * 8 & 255):][:1], 'little', signed=True)
+        base = bases[(bp >> 3) & 3]
+        frames = [struct.unpack_from('<H', image, main + 0x1c + (base + frame) * 2)[0] for frame in (0, 1, 6, 7)]
+        particles.append(dict(x=160 + (bp - 15) * 4, y=18 + (sine >> 3), velocity=(bp + 1) << 13, sprites=frames))
+    (output / 'OriginalTitleLayout.json').write_text(json.dumps(dict(draws=title, particles=particles, height=32)), encoding='utf-8')
     def advance(c):
         p = struct.unpack_from('<H', font, 2 + ord(c) * 2)[0]
         return struct.unpack_from('<H', font, p + 2)[0] if p else 5
