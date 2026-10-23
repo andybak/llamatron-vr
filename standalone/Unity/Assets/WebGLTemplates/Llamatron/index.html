@@ -27,7 +27,13 @@
     <button id="vr" disabled hidden>Enter VR</button>
     <button id="fullscreen" disabled>Fullscreen</button>
     <button id="install" hidden>Install app</button>
+    <button id="save" disabled>Quick save</button>
+    <button id="load" disabled>Quick load</button>
+    <button id="export" disabled>Export save</button>
+    <button id="import" disabled>Import save</button>
+    <input id="save-file" type="file" accept=".llsave" hidden>
   </nav>
+  <p id="save-notice" role="status" hidden></p>
   <p id="error" role="alert" hidden></p>
   <script>
     const canvas = document.querySelector('#game');
@@ -48,6 +54,7 @@
       if (resume) resume().catch(showError);
       game.SendMessage('Standalone simulation', 'StartGame');
       document.querySelector('#welcome').hidden = true;
+      for (const id of ['save', 'load', 'export', 'import']) document.querySelector(`#${id}`).disabled = false;
       canvas.focus();
     };
     window.addEventListener('llamatron-ready', () => {
@@ -63,6 +70,31 @@
       vr.textContent = immersive ? 'Exit VR' : 'Enter VR';
     });
     start.addEventListener('click', begin);
+    window.addEventListener('llamatron-save', event => {
+      const notice = document.querySelector('#save-notice');
+      notice.textContent = event.detail; notice.hidden = false;
+      clearTimeout(notice.hideTimer);
+      notice.hideTimer = setTimeout(() => { notice.hidden = true; }, 4000);
+    });
+    for (const [id, method] of [['save', 'SaveGame'], ['load', 'LoadGame'], ['export', 'ExportSaveGame']]) {
+      document.querySelector(`#${id}`).addEventListener('click', () => {
+        game.SendMessage('Standalone simulation', method); canvas.focus();
+      });
+    }
+    const saveFile = document.querySelector('#save-file');
+    document.querySelector('#import').addEventListener('click', () => saveFile.click());
+    saveFile.addEventListener('change', async () => {
+      try {
+        const file = saveFile.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) throw new Error('Save file is too large.');
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        let binary = '';
+        for (const value of bytes) binary += String.fromCharCode(value);
+        game.SendMessage('Standalone simulation', 'ImportSaveGame', btoa(binary));
+      } catch (error) { showError(error.message); }
+      finally { saveFile.value = ''; canvas.focus(); }
+    });
     vr.addEventListener('click', () => {
       if (!game || !ready) return;
       if (!immersive) begin();

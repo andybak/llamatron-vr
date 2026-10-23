@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using Llamatron.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -27,8 +28,12 @@ namespace Llamatron.Unity
         private GameSimulation game;
         private GameCampaign campaign;
         private GameClock clock;
-        private readonly SpriteFrame frame = new SpriteFrame();
-        private readonly WaveScriptStore waveScripts = new WaveScriptStore();
+        private GameSession session;
+        private WaveScriptStore waveScripts = new WaveScriptStore();
+        private const string SaveKey = "LlamatronSave.v1";
+        private bool previousSave, previousLoad;
+        private string saveNotice;
+        private float saveNoticeUntil;
         private ArenaRenderer arena;
         private SampledAudio sampledAudio;
         private TextMesh hud;
@@ -41,6 +46,8 @@ namespace Llamatron.Unity
         private InputAction headPosition, headRotation, headTracking;
 #if UNITY_WEBGL && !UNITY_EDITOR
         private BrowserPlatform browser;
+        [DllImport("__Internal")] private static extern void LLWebDownloadSave(string data);
+        [DllImport("__Internal")] private static extern void LLWebSaveNotice(string message);
 #endif
 
         private IEnumerator Start()
@@ -88,6 +95,10 @@ namespace Llamatron.Unity
             }
 #endif
             if (!Restart()) yield break;
+#if !UNITY_WEBGL || UNITY_EDITOR
+            string initialSave = ArgumentValue("--load-save");
+            if (!string.IsNullOrEmpty(initialSave)) RestoreSave(File.ReadAllBytes(initialSave));
+#endif
             ready = true;
             Debug.Log($"[LLUNITY] Standalone ready; XR={xr}; sprites={library.graphics.Length}; irqHz={clock.InterruptHz:F6}; displayHz={clock.DisplayHz}; DOS runtime dependencies=0");
         }
@@ -124,11 +135,103 @@ namespace Llamatron.Unity
             arena.ApplyPalette(game.Palette);
             campaign = new GameCampaign(game);
             clock = new GameClock(displayHz);
-            campaign.FrameReady += simulation => { frame.Build(simulation); arena.Present(frame); };
-            campaign.WipeReady += arena.PresentWipe;
+            session = new GameSession(game, campaign, clock, sampledAudio.Driver) { TwinStick = twinStick };
+            ConnectPresentation();
             fault = null; paused = false; ticks = 0; captured = false; smokeFrameReady = false;
             campaign.TickDisplay(); UpdateHud();
             return true;
+        }
+
+        private void ConnectPresentation()
+        {
+            campaign.FrameReady += simulation => arena.Present(session.Frame);
+            campaign.WipeReady += arena.PresentWipe;
+        }
+
+        private byte[] CaptureSave()
+        {
+            if (session == null) throw new InvalidOperationException("[LLSAVE] Game is not ready.");
+            session.CaptureAudioPosition(sampledAudio.SamplePosition);
+            session.TwinStick = twinStick; session.Fault = fault ?? "";
+            return session.Save();
+        }
+
+        private void RestoreSave(byte[] bytes)
+        {
+            GameSession restored = GameSession.Load(bytes);
+            sampledAudio.Restore(restored.Sound, (int)restored.AudioFramePosition);
+            session = restored; game = restored.Simulation; campaign = restored.Campaign; clock = restored.Clock;
+            waveScripts = game.Scripts; twinStick = restored.TwinStick;
+            playMode = (PlayMode)(game.Actors.Spawning.PlayerFlags & 7);
+            displayHz = (float)clock.DisplayHz; paused = campaign.Paused;
+            fault = string.IsNullOrEmpty(restored.Fault) ? null : restored.Fault;
+            ticks = (int)Math.Min(int.MaxValue, clock.InterruptCount);
+            captured = false; smokeFrameReady = false; skipNextDelta = true;
+            ConnectPresentation(); arena.ApplyPalette(game.Palette); arena.Present(session.Frame);
+            foreach (WipeStep step in session.Wipes) arena.PresentWipe(step);
+            UpdateHud();
+            ReportSave($"Loaded wave {campaign.WaveNumber}, tick {clock.InterruptCount}.");
+        }
+
+        private void ReportSave(string message)
+        {
+            saveNotice = message; saveNoticeUntil = Time.unscaledTime + 4;
+            Debug.Log($"[LLSAVE] {message}");
+#if UNITY_WEBGL && !UNITY_EDITOR
+            LLWebSaveNotice(message);
+#endif
+        }
+
+        [UnityEngine.Scripting.Preserve]
+        public void SaveGame()
+        {
+            try
+            {
+                byte[] bytes = CaptureSave();
+#if UNITY_WEBGL && !UNITY_EDITOR
+                PlayerPrefs.SetString(SaveKey, Convert.ToBase64String(bytes)); PlayerPrefs.Save();
+#else
+                string path = Path.Combine(Application.persistentDataPath, "quicksave.llsave");
+                string temporary = $"{path}.tmp";
+                File.WriteAllBytes(temporary, bytes);
+                if (File.Exists(path)) File.Replace(temporary, path, null); else File.Move(temporary, path);
+#endif
+                ReportSave($"Saved wave {campaign.WaveNumber}, tick {clock.InterruptCount}.");
+            }
+            catch (Exception exception) { ReportSave($"Save failed: {exception.Message}"); }
+        }
+
+        [UnityEngine.Scripting.Preserve]
+        public void LoadGame()
+        {
+            try
+            {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                if (!PlayerPrefs.HasKey(SaveKey)) throw new InvalidOperationException("No quick save yet.");
+                RestoreSave(Convert.FromBase64String(PlayerPrefs.GetString(SaveKey)));
+#else
+                RestoreSave(File.ReadAllBytes(Path.Combine(Application.persistentDataPath, "quicksave.llsave")));
+#endif
+            }
+            catch (Exception exception) { ReportSave($"Load failed: {exception.Message}"); }
+        }
+
+        [UnityEngine.Scripting.Preserve]
+        public void ExportSaveGame()
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            try { LLWebDownloadSave(Convert.ToBase64String(CaptureSave())); }
+            catch (Exception exception) { ReportSave($"Export failed: {exception.Message}"); }
+#else
+            SaveGame();
+#endif
+        }
+
+        [UnityEngine.Scripting.Preserve]
+        public void ImportSaveGame(string data)
+        {
+            try { RestoreSave(Convert.FromBase64String(data)); }
+            catch (Exception exception) { ReportSave($"Import failed: {exception.Message}"); }
         }
 
         private void Update()
@@ -137,6 +240,15 @@ namespace Llamatron.Unity
             Keyboard keyboard = Keyboard.current;
             UnityEngine.XR.InputDevice left = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
             UnityEngine.XR.InputDevice right = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+            bool save = Button(left, CommonUsages.secondaryButton) || (keyboard != null && keyboard.f5Key.isPressed);
+            bool load = Button(right, CommonUsages.secondaryButton) || (keyboard != null && keyboard.f9Key.isPressed);
+#if UNITY_WEBGL && !UNITY_EDITOR
+            save |= browser.SavePressed;
+            load |= browser.LoadPressed;
+#endif
+            if (save && !previousSave) SaveGame();
+            if (load && !previousLoad) LoadGame();
+            previousSave = save; previousLoad = load;
             bool restart = Button(left, CommonUsages.primaryButton) || Button(right, CommonUsages.primaryButton);
 #if UNITY_WEBGL && !UNITY_EDITOR
             restart |= browser.RestartPressed;
@@ -211,6 +323,7 @@ namespace Llamatron.Unity
                 campaign.Phase != CampaignPhase.Playing ? "WAVE CLEARED" : "RECONSTRUCTION PREVIEW";
             arena.gameObject.SetActive(campaign.Phase != CampaignPhase.Continue && campaign.Phase != CampaignPhase.GameOver && campaign.Phase != CampaignPhase.Menu);
             string player = ((int)playMode & 4) != 0 ? $"PLAYER {campaign.ActivePlayer + 1} · " : "";
+            if (Time.unscaledTime < saveNoticeUntil) status = $"{status}\n{saveNotice}";
             hud.text = $"LLAMATRON VR · WAVE {campaign.WaveNumber}\n{player}SCORE {game.Actors.Scores.Value(campaign.ActivePlayer):D8}   LIVES {game.Actors.Lives}\n{status}";
         }
 

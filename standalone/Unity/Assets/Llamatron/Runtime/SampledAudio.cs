@@ -6,7 +6,8 @@ namespace Llamatron.Unity
 {
     public sealed class SampledAudio : MonoBehaviour
     {
-        public SoundDriverState Driver { get; } = new SoundDriverState();
+        public SoundDriverState Driver { get; private set; } = new SoundDriverState();
+        public int SamplePosition => voice != null && Driver.ActiveSample != 0 ? voice.timeSamples : 0;
         public int PlayedCount { get; private set; }
         public int StoppedCount { get; private set; }
         public float PeakOutput { get; private set; }
@@ -48,6 +49,19 @@ namespace Llamatron.Unity
             voice.Stop(); voice.clip = clips[id];
             voice.pitch = (float)(SoundDriverState.RateHz(timeConstant) / OriginalSoundData.ContainerHz);
             voice.Play(); PlayedCount++;
+            if (systemPaused) voice.Pause();
+        }
+
+        public void Restore(SoundDriverState driver, int samplePosition)
+        {
+            Driver.Started -= Play; Driver.Stopped -= Stop;
+            voice.Stop(); Driver = driver;
+            Driver.Started += Play; Driver.Stopped += Stop;
+            if (driver.ActiveSample == 0) return;
+            voice.clip = clips[driver.ActiveSample];
+            voice.pitch = (float)(SoundDriverState.RateHz(driver.ActiveRate) / OriginalSoundData.ContainerHz);
+            voice.timeSamples = Math.Max(0, Math.Min(samplePosition, voice.clip.samples - 1));
+            voice.Play();
             if (systemPaused) voice.Pause();
         }
 

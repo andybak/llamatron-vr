@@ -13,7 +13,8 @@ button:disabled { opacity: .45; cursor: wait; }
 button:focus-visible { outline: 3px solid white; outline-offset: 3px; }
 .controls { font-size: .85rem; color: #b5c7c2; }
 .preview { font-size: .75rem; color: #8baba0; }
-nav { position: fixed; right: max(12px, env(safe-area-inset-right)); top: max(12px, env(safe-area-inset-top)); display: flex; gap: 8px; }
+nav { position: fixed; right: max(12px, env(safe-area-inset-right)); left: 12px; top: max(12px, env(safe-area-inset-top)); display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 nav button { background: #102126e8; color: #d4efe5; font-size: .8rem; }
 #error { position: fixed; bottom: 12px; left: 12px; right: 12px; padding: 16px; margin: 0; border-radius: 8px; background: #632e37; color: white; }
 [hidden] { display: none !important; }
+#save-notice { position: fixed; bottom: 12px; left: 12px; padding: 12px; background: #102126e8; border-radius: 8px; }

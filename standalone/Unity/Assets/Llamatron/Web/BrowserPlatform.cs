@@ -12,6 +12,8 @@ namespace Llamatron.Web
     {
         public bool Started { get; private set; }
         public bool Immersive { get; private set; }
+        public bool SavePressed => Left != null && Left.enabled && Left.buttonB > 0.5f;
+        public bool LoadPressed => Right != null && Right.enabled && Right.buttonB > 0.5f;
         public bool RestartPressed => Left != null && Left.enabled && Left.buttonA > 0.5f ||
                                       Right != null && Right.enabled && Right.buttonA > 0.5f;
         public WebXRControllerData Left { get; private set; }
