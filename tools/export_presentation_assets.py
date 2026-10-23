@@ -20,7 +20,7 @@ def export(analysis, source, output):
         return struct.unpack_from('<H', font, p + 2)[0] if p else 5
     def width(text):
         return sum(advance(c) for c in text)
-    for name, offset in [('OriginalCredits', 0x117a), ('OriginalStory', 0x14e1)]:
+    for name, offset in [('OriginalCredits', 0x117a), ('OriginalStory', 0x14e1), ('OriginalGuide', 0x1bc8)]:
         data = image[0x25590 + offset:]
         text, cursor, draws = [], 0, []
         x = y = margin = 0

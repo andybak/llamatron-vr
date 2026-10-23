@@ -1,4 +1,7 @@
 mergeInto(LibraryManager.library, {
+  LLWebPresentationState: function (state) {
+    window.dispatchEvent(new CustomEvent('llamatron-presentation', { detail: state }));
+  },
   LLWebPauseState: function (paused) {
     window.dispatchEvent(new CustomEvent('llamatron-pause', { detail: !!paused }));
   },

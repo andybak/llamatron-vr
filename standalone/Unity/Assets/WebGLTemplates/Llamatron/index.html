@@ -20,8 +20,8 @@
       <p>Fight through the herd in your browser, or enter VR with a compatible headset.</p>
       <progress id="progress" max="1" value="0" aria-label="Loading game"></progress>
       <p id="status" role="status">Loading…</p>
-      <button id="start" disabled>Start game</button>
-      <p class="controls">WASD / arrows: move · Space: lock firing direction<br>P: pause · R: restart</p>
+      <button id="start" disabled>Open game</button>
+      <p class="controls">WASD / arrows: move · Space: lock firing direction<br>P: pause · M: menu · R: restart</p>
       <p class="preview">Reconstruction preview · Some original game features are still in progress.</p>
       <p class="preview">Build __LLAMATRON_BUILD_ID__</p>
     </div>
@@ -31,6 +31,7 @@
     <button id="fullscreen" disabled>Fullscreen</button>
     <button id="install" hidden>Install app</button>
     <button id="pause" disabled aria-pressed="false" aria-keyshortcuts="p" title="Pause or resume (P)">Pause (P)</button>
+    <button id="menu" disabled title="Game menu (M)">Menu (M)</button>
     <button id="save" disabled>Quick save</button>
     <button id="load" disabled>Quick load</button>
     <button id="export" disabled>Export save</button>
@@ -82,7 +83,7 @@
     });
     window.addEventListener('llamatron-started', () => {
       playing = true;
-      for (const id of ['pause', 'save', 'load', 'export', 'import', 'jump']) document.querySelector(`#${id}`).disabled = false;
+      for (const id of ['menu', 'load', 'import', 'jump']) document.querySelector(`#${id}`).disabled = false;
       if (updater.hasResume) setTimeout(async () => {
         if (!(await updater.restore())) document.querySelector('#recover').hidden = false;
       }, 0);
@@ -110,7 +111,7 @@
     };
     window.addEventListener('llamatron-ready', () => {
       ready = true;
-      status.textContent = updater.hasResume ? 'Update installed. Resume your saved game.' : 'Ready. Select Start to enable sound and play.';
+      status.textContent = updater.hasResume ? 'Update installed. Resume your saved game.' : 'Ready. Open the game to enable sound and choose a mode.';
       progress.hidden = true;
       start.disabled = !game;
     });
@@ -132,7 +133,15 @@
       pause.textContent = event.detail ? 'Resume (P)' : 'Pause (P)';
       pause.setAttribute('aria-pressed', String(event.detail));
     });
-    for (const [id, method] of [['pause', 'TogglePause'], ['save', 'SaveGame'], ['load', 'LoadGame'], ['export', 'ExportSaveGame']]) {
+    window.addEventListener('llamatron-presentation', event => {
+      playing = event.detail === 1 || event.detail === 3;
+      document.querySelector('#pause').disabled = event.detail !== 1;
+      for (const id of ['save', 'export']) document.querySelector(`#${id}`).disabled = !playing;
+      const update = document.querySelector('#update');
+      update.disabled = event.detail === 4;
+      update.title = event.detail === 4 ? 'Finish entering high scores before updating.' : '';
+    });
+    for (const [id, method] of [['menu', 'ShowMenu'], ['pause', 'TogglePause'], ['save', 'SaveGame'], ['load', 'LoadGame'], ['export', 'ExportSaveGame']]) {
       document.querySelector(`#${id}`).addEventListener('click', () => {
         game.SendMessage('Standalone simulation', method); canvas.focus();
       });

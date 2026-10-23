@@ -10,10 +10,19 @@
    .tools/python/python.exe tools/serve_web.py
    ```
 
-   Open `http://127.0.0.1:8080`. Select **Start game** to enable browser audio and
-   play. WASD/arrows move, Space locks firing direction, P pauses and R restarts.
+   Open `http://127.0.0.1:8080`. Select **Open game** to enable browser audio and
+   open the title menu. Choose solo, droid partner or two players, with optional
+   alternating turns and twin-stick aim, then **Start game**. WASD/arrows move,
+   Space locks firing direction, P pauses and M opens the menu without advancing
+   the suspended game. Mouse clicks or arrows/Enter select menu items.
    **Enter VR** appears when the browser reports immersive VR support. Headset
    input uses the same stick/trigger controls as the native preview.
+   Menu navigation also accepts stick up/down and trigger; A/X returns to the menu.
+   **How to play > Field guide** shows the original illustrated instructions.
+   Idle title screens rotate through the original story, three-wave AI demos and
+   credits. **Watch demo** starts a demo immediately; Space/trigger leaves it.
+   Qualifying games offer eight-character name entry and retain the top ten scores
+   locally across visits. Test-wave starts do not submit high scores.
 3. Upload the entire web output directory to a static HTTPS host to distribute
    it. Relative paths support hosting in a subdirectory. Unity's Gzip
    decompression fallback supports hosts without custom compression headers.

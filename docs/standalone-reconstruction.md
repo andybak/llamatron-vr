@@ -936,8 +936,11 @@ freeze-dependent threshold and the separate 140 comparison.
 
 1. Extend the working REA DOS analysis across the remaining indirect handlers and
    retain their function evidence. Continue verifying and extending the mapping.
-2. Complete original menu/high-score presentation, demo AI integration and original
-   pause input. Validate droid, alternating-player snapshots and wave wipes against
+2. Original-font menus, persistent high scores, illustrated story/guide/credits
+   and the recovered demo AI are integrated; see `docs/original-presentation.md`
+   for source evidence and validation boundaries. Finish browser and physical
+   stereo checks of that flow, and compare presentation timing against the original.
+   Validate droid, alternating-player snapshots and wave wipes against
    longer original sessions. Exercise warp playback
    end to end against the original, beyond the core status/retrace checks.
    Verify the connected normal

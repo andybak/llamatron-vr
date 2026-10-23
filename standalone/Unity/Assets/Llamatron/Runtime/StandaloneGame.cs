@@ -36,7 +36,8 @@ namespace Llamatron.Unity
         private float saveNoticeUntil;
         private ArenaRenderer arena;
         private SampledAudio sampledAudio;
-        private TextMesh hud;
+        private PixelText hud;
+        private GamePresentation presentation;
         private bool ready, xr, paused, previousRestart, captured;
         private bool smokeFrameReady, systemPaused, skipNextDelta;
         private int ticks;
@@ -46,6 +47,7 @@ namespace Llamatron.Unity
         private InputAction headPosition, headRotation, headTracking;
 #if UNITY_WEBGL && !UNITY_EDITOR
         private BrowserPlatform browser;
+        [DllImport("__Internal")] private static extern void LLWebPresentationState(int state);
         private bool? reportedPause;
         [DllImport("__Internal")] private static extern void LLWebPauseState(int paused);
         [DllImport("__Internal")] private static extern void LLWebDownloadSave(string data);
@@ -67,7 +69,7 @@ namespace Llamatron.Unity
             arena = new GameObject("Arena presentation").AddComponent<ArenaRenderer>();
             arena.Initialize(library);
             sampledAudio = gameObject.AddComponent<SampledAudio>(); sampledAudio.Initialize();
-            CreateHud(arena.ArenaBounds);
+            CreateHud(arena.ArenaBounds, library.material);
 #if UNITY_WEBGL && !UNITY_EDITOR
             browser = gameObject.AddComponent<BrowserPlatform>();
             yield return browser.Initialize(view);
@@ -104,29 +106,160 @@ namespace Llamatron.Unity
             }
 #endif
             if (!Restart()) yield break;
+            presentation = gameObject.AddComponent<GamePresentation>();
+            presentation.Initialize(this, hud, library, !HasArgument("--presentation-check"));
 #if !UNITY_WEBGL || UNITY_EDITOR
             string initialSave = ArgumentValue("--load-save");
             if (!string.IsNullOrEmpty(initialSave)) RestoreSave(File.ReadAllBytes(initialSave));
+            else if (smoke || HasArgument("--wave")) presentation.Loaded(false);
 #endif
             ready = true;
 #if UNITY_WEBGL && !UNITY_EDITOR
             LLWebGameStarted();
 #endif
+            PresentationChanged();
+            if (HasArgument("--presentation-capture")) StartCoroutine(CapturePresentation());
+            if (HasArgument("--presentation-check")) StartCoroutine(CheckPresentationFlow());
             Debug.Log($"[LLUNITY] Standalone ready; XR={xr}; sprites={library.graphics.Length}; irqHz={clock.InterruptHz:F6}; displayHz={clock.DisplayHz}; DOS runtime dependencies=0");
         }
 
-        private void CreateHud(Bounds arenaBounds)
+        private void CreateHud(Bounds arenaBounds, Material spriteMaterial)
         {
-            var go = new GameObject("Score and status"); hud = go.AddComponent<TextMesh>();
-            hud.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            go.GetComponent<MeshRenderer>().sharedMaterial = hud.font.material;
-            hud.characterSize = 0.014f; hud.fontSize = 56; hud.anchor = TextAnchor.UpperCenter; hud.alignment = TextAlignment.Center;
-            hud.color = new Color(0.7f, 1, 0.85f); hud.text = "LLAMATRON VR\nRECONSTRUCTION PREVIEW";
+            var go = new GameObject("Score and status"); hud = go.AddComponent<PixelText>();
+            hud.Initialize(spriteMaterial);
+            hud.text = "LLAMATRON\n2112";
             go.transform.position = new Vector3(arenaBounds.center.x, arenaBounds.max.y + 0.55f, arenaBounds.min.z);
             go.transform.rotation = Quaternion.Euler(0, 180, 0);
         }
 
-        private bool Restart()
+        private IEnumerator CapturePresentation()
+        {
+            presentation.Preview(ArgumentValue("--presentation-page") ?? "Title");
+            yield return new WaitForSecondsRealtime(2);
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            Capture(ArgumentValue("--presentation-capture"));
+            yield return null;
+            yield return new WaitForSecondsRealtime(1);
+            Debug.Log($"[LLPRESENT] Captured {presentation.Page}; font=original; high-scores=10.");
+            Application.Quit(0);
+        }
+
+        private IEnumerator CheckPresentationFlow()
+        {
+            IEnumerator checks = PresentationFlowSteps();
+            while (true)
+            {
+                bool more = false; Exception failure = null;
+                try { more = checks.MoveNext(); }
+                catch (Exception e) { failure = e; }
+                if (failure != null) { Debug.LogError($"[LLPRESENT] Flow check failed: {failure}"); Application.Quit(1); yield break; }
+                if (!more) break;
+                yield return checks.Current;
+            }
+            Debug.Log("[LLPRESENT] Flow checks passed: title, modes, menu freeze/resume, paused saves, test-wave entry, story/demo/credits rotation.");
+            Application.Quit(0);
+        }
+
+        private IEnumerator PresentationFlowSteps()
+        {
+            presentation.Menu();
+            presentation.Activate(2); presentation.Activate(3); presentation.Activate(4); presentation.Activate(0);
+            if (!presentation.ActiveGameplay || game.Actors.Spawning.PlayerFlags != 5 || !session.TwinStick)
+                throw new InvalidOperationException("Mode selection did not start alternating droid with twin-stick aim.");
+            yield return new WaitForSecondsRealtime(0.1f);
+            presentation.Menu(); long before = clock.InterruptCount;
+            yield return new WaitForSecondsRealtime(0.1f);
+            if (clock.InterruptCount != before) throw new InvalidOperationException("Menu advanced the suspended game.");
+            presentation.Activate(0); TogglePause();
+            if (!GameSession.Load(CaptureSave()).Campaign.Paused) throw new InvalidOperationException("Pause was not captured immediately.");
+            presentation.Menu(); presentation.Activate(0);
+            if (!paused) throw new InvalidOperationException("Menu lost the user's pause state.");
+            TogglePause(); StartTestWave("69");
+            if (!presentation.ActiveGameplay || campaign.WaveNumber != 69) throw new InvalidOperationException("Test wave did not leave the menu.");
+            byte[] state = CaptureSave(); RestoreSave(state);
+            if (campaign.WaveNumber != 69 || !presentation.ActiveGameplay) throw new InvalidOperationException("Loading did not restore gameplay.");
+            presentation.Preview("Demo");
+            if (!presentation.IsDemo || game.Actors.ScriptedMode != 3) throw new InvalidOperationException("Attract mode is not using the original demo AI.");
+            presentation.Finished(game, playMode);
+            if (presentation.Page != PresentationPage.Story) throw new InvalidOperationException("Story attract entry missing.");
+            presentation.NextAttract(); presentation.Finished(game, playMode);
+            if (presentation.Page != PresentationPage.Credits) throw new InvalidOperationException("Credits attract entry missing.");
+            presentation.NextAttract();
+            if (!presentation.IsDemo) throw new InvalidOperationException("Second demo attract entry missing.");
+            presentation.Menu(); presentation.Activate(0);
+            game.Actors.Scores.Award(0, 3, 2, 0); // Fixture: 400,000, ahead of the initial top score.
+            presentation.Finished(game, playMode);
+            if (presentation.Page != PresentationPage.GameOver) throw new InvalidOperationException("Game-over presentation missing.");
+            presentation.EndGameOver();
+            if (presentation.Page != PresentationPage.NameEntry) throw new InvalidOperationException("Qualifying score did not request a name.");
+            presentation.SubmitScore();
+            if (presentation.Page != PresentationPage.Scores) throw new InvalidOperationException("Name entry did not return to high scores.");
+        }
+
+        public bool BeginGame(PlayMode mode, bool splitAim, bool demonstration)
+        {
+            playMode = demonstration ? PlayMode.Solo : mode;
+            twinStick = !demonstration && splitAim;
+            return Restart(demonstration);
+        }
+
+        public byte PresentationInput
+        {
+            get
+            {
+                byte input = ReadInput(null, InputDevices.GetDeviceAtXRNode(XRNode.LeftHand), InputDevices.GetDeviceAtXRNode(XRNode.RightHand), false);
+#if UNITY_WEBGL && !UNITY_EDITOR
+                if (browser != null) input |= browser.Primary(false);
+#endif
+                return input;
+            }
+        }
+        public bool PresentationBack
+        {
+            get
+            {
+                bool pressed = Button(InputDevices.GetDeviceAtXRNode(XRNode.LeftHand), CommonUsages.primaryButton) || Button(InputDevices.GetDeviceAtXRNode(XRNode.RightHand), CommonUsages.primaryButton);
+#if UNITY_WEBGL && !UNITY_EDITOR
+                if (browser != null) pressed |= browser.RestartPressed;
+#endif
+                return pressed;
+            }
+        }
+
+        [UnityEngine.Scripting.Preserve]
+        public void ShowMenu() { if (ready) presentation.Menu(); }
+
+        public void StopPresentationAudio()
+        {
+            sampledAudio.Driver.Queue(0, 0, 0);
+            sampledAudio.Driver.StopAll(); sampledAudio.Driver.Service();
+        }
+
+        public void PlayGameOverSound()
+        {
+            sampledAudio.Driver.Queue(30, 1, 8); sampledAudio.Driver.Service();
+        }
+
+        public bool PresentationSoundPlaying
+        {
+            get { sampledAudio.PollCompletion(); return sampledAudio.Driver.ActiveSample != 0; }
+        }
+
+        public void PresentationChanged()
+        {
+            if (presentation == null) return;
+            sampledAudio.SetSystemPaused(systemPaused || paused || (!presentation.ActiveGameplay && presentation.Page != PresentationPage.GameOver));
+            hud.gameObject.SetActive(presentation.ActiveGameplay);
+            if (presentation.ActiveGameplay) { skipNextDelta = true; UpdateHud(); }
+            else arena.gameObject.SetActive(false);
+#if UNITY_WEBGL && !UNITY_EDITOR
+            if (ready) LLWebPresentationState(presentation.Page == PresentationPage.NameEntry || presentation.Page == PresentationPage.GameOver ? 4 :
+                presentation.IsDemo ? 2 : presentation.ActiveGameplay ? 1 : presentation.HasPlayerGame ? 3 : 0);
+#endif
+        }
+
+        private bool Restart(bool demonstration = false)
         {
             if (HasArgument("--smoke-ticks") && (!int.TryParse(ArgumentValue("--smoke-ticks"), out smokeTicks) || smokeTicks < 1 || smokeTicks > 10000))
             {
@@ -140,9 +273,11 @@ namespace Llamatron.Unity
                 Application.Quit(2); return false;
             }
             var random = new System.Random(smoke ? 12345 : Environment.TickCount);
+            if (demonstration) { waveNumber = random.Next(32) + 1; if (waveNumber > 27) waveNumber = 1; }
             sampledAudio.Driver.StopAll();
+            waveScripts = new WaveScriptStore();
             game = new GameSimulation(RandomSequence.Shuffle(() => (ushort)random.Next(65536)), waveIndex: waveNumber - 1, playerFlags: (byte)playMode,
-                                      scripts: waveScripts, sound: sampledAudio.Driver);
+                                      scripts: waveScripts, sound: sampledAudio.Driver, demoWaves: demonstration ? (short)3 : (short)0);
             game.Palette.Effects = paletteEffects;
             arena.ApplyPalette(game.Palette);
             campaign = new GameCampaign(game);
@@ -183,6 +318,7 @@ namespace Llamatron.Unity
             foreach (WipeStep step in session.Wipes) arena.PresentWipe(step);
             UpdateHud();
             ReportSave($"Loaded wave {campaign.WaveNumber}, tick {clock.InterruptCount}.");
+            if (presentation != null) presentation.Loaded();
         }
 
         private void ReportSave(string message)
@@ -277,6 +413,7 @@ namespace Llamatron.Unity
                 var test = GameSession.Create(wave, seed: 17, playerFlags: (byte)playMode, displayHz: displayHz);
                 test.TwinStick = twinStick;
                 RestoreSave(test.Save());
+                if (presentation != null) presentation.Loaded(false);
                 ReportSave($"Started test wave {wave} with seed 17.");
             }
             catch (Exception exception) { ReportSave($"Test wave failed: {exception.Message}"); }
@@ -285,9 +422,10 @@ namespace Llamatron.Unity
         [UnityEngine.Scripting.Preserve]
         public void TogglePause()
         {
-            if (!ready) return;
+            if (!ready || (presentation != null && !presentation.ActiveGameplay)) return;
             paused = !paused;
             campaign.Paused = paused;
+            sampledAudio.SetSystemPaused(systemPaused || paused);
             UpdateHud();
         }
 
@@ -295,6 +433,14 @@ namespace Llamatron.Unity
         {
             if (!ready) return;
             Keyboard keyboard = Keyboard.current;
+            if (presentation != null && !presentation.ActiveGameplay)
+            {
+                if (keyboard != null && keyboard.f5Key.wasPressedThisFrame && presentation.HasPlayerGame) SaveGame();
+                if (keyboard != null && keyboard.f9Key.wasPressedThisFrame) LoadGame();
+                return;
+            }
+            if (presentation != null && !presentation.IsDemo && keyboard != null &&
+                (keyboard.mKey.wasPressedThisFrame || keyboard.escapeKey.wasPressedThisFrame)) { ShowMenu(); return; }
             UnityEngine.XR.InputDevice left = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
             UnityEngine.XR.InputDevice right = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
             bool save = Button(left, CommonUsages.secondaryButton) || (keyboard != null && keyboard.f5Key.isPressed);
@@ -312,7 +458,10 @@ namespace Llamatron.Unity
             xr = browser.Immersive;
 #endif
             bool ended = campaign.Phase == CampaignPhase.GameOver || campaign.Phase == CampaignPhase.Menu;
-            if ((keyboard != null && keyboard.rKey.wasPressedThisFrame) || (restart && !previousRestart && (ended || fault != null))) Restart();
+            if ((keyboard != null && keyboard.rKey.wasPressedThisFrame) || (restart && !previousRestart && (ended || fault != null)))
+            {
+                Restart(); if (presentation != null) presentation.Loaded(false);
+            }
             previousRestart = restart;
             if (keyboard != null && keyboard.pKey.wasPressedThisFrame) TogglePause();
 #if !UNITY_WEBGL || UNITY_EDITOR
@@ -351,6 +500,10 @@ namespace Llamatron.Unity
             }
             skipNextDelta = false;
             paused = campaign.Paused;
+            if (!smoke && presentation != null && (campaign.Phase == CampaignPhase.GameOver || campaign.Phase == CampaignPhase.Menu))
+            {
+                presentation.Finished(game, playMode); return;
+            }
             arena.ApplyPalette(game.Palette);
             if (smoke) sampledAudio.ObserveOutput();
             UpdateHud();
@@ -367,7 +520,7 @@ namespace Llamatron.Unity
         {
             if (systemPaused && !pause) skipNextDelta = true;
             systemPaused = pause;
-            if (sampledAudio != null) sampledAudio.SetSystemPaused(pause);
+            if (sampledAudio != null) sampledAudio.SetSystemPaused(pause || paused || (presentation != null && !presentation.ActiveGameplay && presentation.Page != PresentationPage.GameOver));
         }
 
         private void UpdateHud()
@@ -384,7 +537,8 @@ namespace Llamatron.Unity
                 campaign.Phase == CampaignPhase.GameOver ? "GAME OVER · R / A: new game" :
                 campaign.Phase == CampaignPhase.Menu ? "R / A: new game" :
                 campaign.Phase == CampaignPhase.WarpAudio ? "WARP" :
-                campaign.Phase != CampaignPhase.Playing ? "WAVE CLEARED" : "RECONSTRUCTION PREVIEW";
+                campaign.Phase != CampaignPhase.Playing ? "WAVE CLEARED" :
+                presentation != null && presentation.IsDemo ? "DEMO - SPACE / TRIGGER: MENU" : "RESCUE THE BEASTIES";
             arena.gameObject.SetActive(campaign.Phase != CampaignPhase.Continue && campaign.Phase != CampaignPhase.GameOver && campaign.Phase != CampaignPhase.Menu);
             string player = ((int)playMode & 4) != 0 ? $"PLAYER {campaign.ActivePlayer + 1} · " : "";
             if (Time.unscaledTime < saveNoticeUntil) status = $"{status}\n{saveNotice}";
