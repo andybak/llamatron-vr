@@ -30,6 +30,7 @@
     <button id="vr" disabled hidden>Enter VR</button>
     <button id="fullscreen" disabled>Fullscreen</button>
     <button id="install" hidden>Install app</button>
+    <button id="pause" disabled aria-pressed="false" aria-keyshortcuts="p" title="Pause or resume (P)">Pause (P)</button>
     <button id="save" disabled>Quick save</button>
     <button id="load" disabled>Quick load</button>
     <button id="export" disabled>Export save</button>
@@ -81,7 +82,7 @@
     });
     window.addEventListener('llamatron-started', () => {
       playing = true;
-      for (const id of ['save', 'load', 'export', 'import', 'jump']) document.querySelector(`#${id}`).disabled = false;
+      for (const id of ['pause', 'save', 'load', 'export', 'import', 'jump']) document.querySelector(`#${id}`).disabled = false;
       if (updater.hasResume) setTimeout(async () => {
         if (!(await updater.restore())) document.querySelector('#recover').hidden = false;
       }, 0);
@@ -126,7 +127,12 @@
       clearTimeout(notice.hideTimer);
       notice.hideTimer = setTimeout(() => { notice.hidden = true; }, 4000);
     });
-    for (const [id, method] of [['save', 'SaveGame'], ['load', 'LoadGame'], ['export', 'ExportSaveGame']]) {
+    window.addEventListener('llamatron-pause', event => {
+      const pause = document.querySelector('#pause');
+      pause.textContent = event.detail ? 'Resume (P)' : 'Pause (P)';
+      pause.setAttribute('aria-pressed', String(event.detail));
+    });
+    for (const [id, method] of [['pause', 'TogglePause'], ['save', 'SaveGame'], ['load', 'LoadGame'], ['export', 'ExportSaveGame']]) {
       document.querySelector(`#${id}`).addEventListener('click', () => {
         game.SendMessage('Standalone simulation', method); canvas.focus();
       });

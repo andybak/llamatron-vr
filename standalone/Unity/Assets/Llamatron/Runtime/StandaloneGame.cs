@@ -46,6 +46,8 @@ namespace Llamatron.Unity
         private InputAction headPosition, headRotation, headTracking;
 #if UNITY_WEBGL && !UNITY_EDITOR
         private BrowserPlatform browser;
+        private bool? reportedPause;
+        [DllImport("__Internal")] private static extern void LLWebPauseState(int paused);
         [DllImport("__Internal")] private static extern void LLWebDownloadSave(string data);
         [DllImport("__Internal")] private static extern void LLWebSaveNotice(string message);
         [DllImport("__Internal")] private static extern void LLWebGameStarted();
@@ -280,6 +282,15 @@ namespace Llamatron.Unity
             catch (Exception exception) { ReportSave($"Test wave failed: {exception.Message}"); }
         }
 
+        [UnityEngine.Scripting.Preserve]
+        public void TogglePause()
+        {
+            if (!ready) return;
+            paused = !paused;
+            campaign.Paused = paused;
+            UpdateHud();
+        }
+
         private void Update()
         {
             if (!ready) return;
@@ -303,7 +314,7 @@ namespace Llamatron.Unity
             bool ended = campaign.Phase == CampaignPhase.GameOver || campaign.Phase == CampaignPhase.Menu;
             if ((keyboard != null && keyboard.rKey.wasPressedThisFrame) || (restart && !previousRestart && (ended || fault != null))) Restart();
             previousRestart = restart;
-            if (keyboard != null && keyboard.pKey.wasPressedThisFrame) paused = !paused;
+            if (keyboard != null && keyboard.pKey.wasPressedThisFrame) TogglePause();
 #if !UNITY_WEBGL || UNITY_EDITOR
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && !xr) Application.Quit();
 #endif
@@ -361,6 +372,13 @@ namespace Llamatron.Unity
 
         private void UpdateHud()
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            if (reportedPause != paused)
+            {
+                reportedPause = paused;
+                LLWebPauseState(paused ? 1 : 0);
+            }
+#endif
             string status = fault != null ? "This part of the reconstruction is unfinished.\nR / A: restart" :
                 paused ? "PAUSED" : campaign.Phase == CampaignPhase.Continue ? $"CONTINUE? {campaign.ContinueCount} · SPACE / TRIGGER" :
                 campaign.Phase == CampaignPhase.GameOver ? "GAME OVER · R / A: new game" :
