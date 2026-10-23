@@ -1,5 +1,7 @@
 """Export the original bitmap font and initial high-score table for the player."""
 import argparse
+import json
+import struct
 from pathlib import Path
 
 
@@ -12,9 +14,22 @@ def export(analysis, source, output):
     (output / 'OriginalFont.bytes').write_bytes(font)
     (output / 'OriginalScores.bytes').write_bytes(scores)
     image = (analysis / 'GAME86.image.bin').read_bytes()
+    main = struct.unpack_from('<H', image, 0x25f)[0] * 16
+    def advance(c):
+        p = struct.unpack_from('<H', font, 2 + ord(c) * 2)[0]
+        return struct.unpack_from('<H', font, p + 2)[0] if p else 5
+    def width(text):
+        return sum(advance(c) for c in text)
     for name, offset in [('OriginalCredits', 0x117a), ('OriginalStory', 0x14e1)]:
         data = image[0x25590 + offset:]
-        text, cursor = [], 0
+        text, cursor, draws = [], 0, []
+        x = y = margin = 0
+        color = 15
+        def letters(value, left, top):
+            if draws and draws[-1]['sprite'] == -1 and draws[-1]['color'] == color and draws[-1]['y'] == top and draws[-1]['x'] + width(draws[-1]['text']) == left:
+                draws[-1]['text'] += value
+            else:
+                draws.append(dict(x=left, y=top, color=color, sprite=-1, text=value))
         while cursor < len(data):
             c = data[cursor]
             cursor += 1
@@ -25,15 +40,45 @@ def export(analysis, source, output):
                     break
                 if command == 'r':
                     text.append('\n')
+                    x = margin
+                    y += 21
                 elif command == 'c':
+                    color = data[cursor] & 15
                     cursor += 1
-                elif command in ('s', 'g'):
-                    cursor += 2  # Inline sprite or spacing command; prose retained.
-                elif command != 'q':
+                elif command == 's':
+                    index = int.from_bytes(data[cursor:cursor + 2], 'big') + 14
+                    sprite = struct.unpack_from('<H', image, main + index * 2)[0]
+                    last_y, last_x = struct.unpack_from('<HH', image, main + sprite + 4)
+                    draws.append(dict(x=x, y=y + 4 - (last_y + 1) // 2, color=color, sprite=sprite, text=''))
+                    x += last_x
+                    cursor += 2
+                elif command == 'g':
+                    x = margin = data[cursor]
+                    y += int.from_bytes(data[cursor + 1:cursor + 2], 'little', signed=True)
+                    cursor += 2
+                elif command == 'q':
+                    end = data.index(0, cursor)
+                    centered = data[cursor:end].decode('ascii')
+                    letters(centered, 160 - width(centered) // 2, y)
+                    text.append(centered)
+                    cursor = end + 1
+                else:
                     raise ValueError(f'[LLPRESENT] Unknown text command {command}')
             elif 32 <= c < 127:
                 text.append(chr(c))
+                end = cursor
+                while data[end] not in (0, 32, 92):
+                    end += 1
+                word = data[cursor - 1:end].decode('ascii')
+                if x + width(word) >= 304:
+                    x = margin
+                    y += 21
+                    if c == 32:
+                        continue
+                letters(chr(c), x, y)
+                x += advance(chr(c))
         (output / f'{name}.txt').write_text(''.join(text).strip(), encoding='utf-8')
+        (output / f'{name}Layout.json').write_text(json.dumps(dict(draws=draws, height=max(y + 21, max(d['y'] + 32 for d in draws)))), encoding='utf-8')
     print('[LLPRESENT] Exported original bitmap font and ten-entry score table.')
 
 
