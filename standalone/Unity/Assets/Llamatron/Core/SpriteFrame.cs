@@ -11,12 +11,17 @@ namespace Llamatron.Core
         public readonly bool IsLine;
         public readonly short EndX, EndY;
         public readonly byte ColorIndex;
-        public SpriteCommand(short x, short y, ushort offset, bool transformed = false, short rowSpacing = 1, short skew = 0, bool flat = false)
+        // Transient rendering hint; deliberately excluded from portable saves.
+        public readonly short PresentationId;
+        public SpriteCommand(short x, short y, ushort offset, bool transformed = false, short rowSpacing = 1, short skew = 0, bool flat = false, short presentationId = 0)
         {
             X = x; Y = y; Offset = offset; Transformed = transformed;
             RowSpacing = rowSpacing; Skew = skew; Flat = flat;
             IsLine = false; EndX = 0; EndY = 0; ColorIndex = 0;
+            PresentationId = presentationId;
         }
+        private SpriteCommand(SpriteCommand command, short presentationId) { this = command; PresentationId = presentationId; }
+        public SpriteCommand WithPresentationId(short id) => new SpriteCommand(this, id);
 
         private SpriteCommand(short x, short y, short endX, short endY, byte colorIndex) : this(x, y, 0)
         { IsLine = true; EndX = endX; EndY = endY; ColorIndex = colorIndex; }
@@ -42,6 +47,7 @@ namespace Llamatron.Core
             {
                 Entity entity = state.Spawning.Pool.Records[i];
                 if (!entity.Active) continue;
+                int firstCommand = Commands.Count;
                 ushort offset = entity[0x0c] < 0 ? unchecked((ushort)entity[0x2c]) : Graphic(entity[0x0c]);
                 switch (unchecked((byte)entity.RenderState))
                 {
@@ -82,6 +88,7 @@ namespace Llamatron.Core
                     case 8: case 17: case 18: break;
                     default: throw new NotSupportedException($"Unported render state {entity.RenderState}.");
                 }
+                for (int c = firstCommand; c < Commands.Count; c++) Commands[c] = Commands[c].WithPresentationId((short)(i + 1));
                 // CS:4392: score popup lifetime advances in the render path.
                 if (entity[0x32] != 0)
                 {
@@ -113,7 +120,7 @@ namespace Llamatron.Core
             }
             else
             {
-                Commands.Add(new SpriteCommand(x, y, offset));
+                Commands.Add(new SpriteCommand(x, y, offset, presentationId: (short)(EntityPool.GameplayRecords + 1 + (second ? 1 : 0))));
                 short labelY = second ? state.SecondaryRescueLabelY : state.PrimaryRescueLabelY;
                 if (labelY >= 0) Commands.Add(new SpriteCommand(x, labelY, 0x5296));
             }

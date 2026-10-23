@@ -22,6 +22,7 @@ namespace Llamatron.Unity
     {
         public Camera view;
         public float displayHz = 70; // Provisional VGA retrace rate; independent of the recovered PIT clock.
+        [Range(0, 30)] public float spriteYawVariationDegrees = 12f;
         public PaletteEffects paletteEffects = PaletteEffects.Full;
         public PlayMode playMode;
         public bool twinStick;
@@ -67,6 +68,7 @@ namespace Llamatron.Unity
             SpriteLibrary library = Resources.Load<SpriteLibrary>("Generated/SpriteLibrary");
             if (library == null) { Debug.LogError("[LLUNITY] Bake the standalone sprite library before running."); yield break; }
             arena = new GameObject("Arena presentation").AddComponent<ArenaRenderer>();
+            arena.SpriteYawVariationDegrees = spriteYawVariationDegrees;
             arena.Initialize(library);
             sampledAudio = gameObject.AddComponent<SampledAudio>(); sampledAudio.Initialize();
             CreateHud(arena.ArenaBounds, library.material);

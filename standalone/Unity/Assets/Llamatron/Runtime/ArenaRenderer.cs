@@ -8,6 +8,7 @@ namespace Llamatron.Unity
 {
     public sealed class ArenaRenderer : MonoBehaviour
     {
+        [Range(0, 30)] public float SpriteYawVariationDegrees = 12f;
         private sealed class Visual
         {
             public Transform transform;
@@ -114,11 +115,20 @@ namespace Llamatron.Unity
                 // Face sprite fronts toward +Z; use the same orientation for the effect plane.
                 visual.transform.localPosition = new Vector3((160 - command.X) * PixelX,
                     floorTop + (command.Flat ? 0.07f : 0.008f), command.Flat ? z + graphic.height * PixelY / 2 : z);
-                visual.transform.localRotation = command.Flat ? Quaternion.Euler(90, 180, 0) : Quaternion.Euler(0, 180, 0);
+                int yawKey = command.PresentationId != 0 ? command.PresentationId : count + 1000;
+                visual.transform.localRotation = command.Flat ? Quaternion.Euler(90, 180, 0) : Quaternion.Euler(0, 180 + SpriteYaw(yawKey), 0);
                 visual.transform.localScale = new Vector3(graphic.width * PixelX, graphic.height * PixelY, 1);
             }
             for (int i = count; i < visuals.Length; i++) visuals[i].renderer.enabled = false;
             effectTexture.SetPixels32(effects); effectTexture.Apply(false, false);
+        }
+
+        private float SpriteYaw(int key)
+        {
+            // Stable variation without consuming either gameplay or Unity random state.
+            uint hash = unchecked((uint)key * 2654435761u);
+            hash ^= hash >> 16;
+            return ((hash & 65535u) / 65535f * 2 - 1) * SpriteYawVariationDegrees;
         }
 
         public void PresentWipe(WipeStep step)
