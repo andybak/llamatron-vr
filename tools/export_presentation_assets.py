@@ -15,6 +15,13 @@ def export(analysis, source, output):
     (output / 'OriginalScores.bytes').write_bytes(scores)
     image = (analysis / 'GAME86.image.bin').read_bytes()
     main = struct.unpack_from('<H', image, 0x25f)[0] * 16
+    # CS:402c selects ten logo glyphs through DS:2118 and spaces centers by 24.
+    title = []
+    for i, code in enumerate(image[0x25590 + 0x2118:0x25590 + 0x2122]):
+        sprite = struct.unpack_from('<H', image, main + 0x1c + code * 2)[0]
+        last_y, last_x = struct.unpack_from('<HH', image, main + sprite + 4)
+        title.append(dict(x=50 + i * 24 - (last_x >> 1), y=20 - (last_y >> 1), color=15, sprite=sprite, text=''))
+    (output / 'OriginalTitleLayout.json').write_text(json.dumps(dict(draws=title, height=32)), encoding='utf-8')
     def advance(c):
         p = struct.unpack_from('<H', font, 2 + ord(c) * 2)[0]
         return struct.unpack_from('<H', font, p + 2)[0] if p else 5

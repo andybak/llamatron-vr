@@ -20,6 +20,7 @@ namespace Llamatron.Unity
         private Keyboard textKeyboard;
         private readonly HighScoreNameEntry nameEntry = new HighScoreNameEntry();
         private ScrollPage scrollPage;
+        private ScrollPage titlePage;
         private Color32[] textPalette;
         private readonly Queue<(int player, uint score)> pendingScores = new Queue<(int, uint)>();
         private uint pendingScore;
@@ -44,6 +45,7 @@ namespace Llamatron.Unity
             owner = game;
             persistScores = persistentScores;
             textPalette = library.palette;
+            titlePage = JsonUtility.FromJson<ScrollPage>(Resources.Load<TextAsset>("Generated/OriginalTitleLayout").text);
             panel = new GameObject("Game presentation").AddComponent<PixelPanel>();
             panel.Initialize(owner.view, library, font.Font);
             byte[] initial = Resources.Load<TextAsset>("Generated/OriginalScores").bytes;
@@ -216,7 +218,11 @@ namespace Llamatron.Unity
         {
             if (owner == null || panel == null || ActiveGameplay) return;
             panel.Begin();
-            Text("LLAMATRON: 2112", 200, 14, Color.yellow, true);
+            if (Page == PresentationPage.Title)
+            {
+                foreach (ScrollDraw draw in titlePage.draws) panel.Sprite(draw.sprite, 40 + draw.x, draw.y, 1, 0x118c);
+            }
+            else Text("LLAMATRON: 2112", 200, 14, Color.yellow, true);
             if (Page == PresentationPage.Title)
             {
                 Sprite(0x1b12, 0, 86); Sprite(0x2f0a, 303, 86);

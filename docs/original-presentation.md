@@ -5,6 +5,8 @@
    2, and CS:559f draws word 4 plus one rows from offset 6. The final shared
    `]`/`^`/`_` glyph is truncated in the original resource; the reconstruction
    displays a complete question-mark fallback instead of reading adjacent memory.
+   The title logo uses its separate main-bank letter sprites, selected by
+   DS:2118 and positioned at the original CS:402c horizontal spacing.
 2. `tools/export_presentation_assets.py` exports the font, `SCORES.ORI`, and the
    original scroll layouts from the decoded image. Story starts at DS:14e1,
    credits at DS:117a, and the illustrated field guide at DS:1bc8. CS:5363-54f6
