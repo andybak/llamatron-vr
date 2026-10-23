@@ -9,6 +9,10 @@
    desktop and VR. Native quick saves live at
    `Application.persistentDataPath/quicksave.llsave`; `--load-save <absolute-file>`
    loads a portable state at startup.
+   **Test wave > Start wave** starts any wave from 1 to 100 with a fixed seed (17),
+   fresh lives/score and that wave's carried parameter prefix. Quick-save first
+   to return to your current run. It is an independent test start, so campaign
+   mutations from earlier waves require an actual campaign save instead.
 3. Saves capture the current simulation and campaign, including partial spawning,
    all 100 actor records and retained words, bullets, both player histories and
    campaign packets, mutable wave scripts, parameters, random table/cursor,
@@ -61,3 +65,5 @@
    not automatically a game defect. The player build does not use this bot or
    the extra lives. Browser builds show a build timestamp on the welcome card;
    close other tabs for the site when installing a service-worker update.
+   Add `--report artifacts/state-details.json` to `inspect` to write the current
+   spawn groups, player positions and complete actor words for diagnosis.

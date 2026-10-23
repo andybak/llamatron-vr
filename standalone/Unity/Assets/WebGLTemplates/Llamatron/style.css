@@ -18,3 +18,5 @@ nav button { background: #102126e8; color: #d4efe5; font-size: .8rem; }
 #error { position: fixed; bottom: 12px; left: 12px; right: 12px; padding: 16px; margin: 0; border-radius: 8px; background: #632e37; color: white; }
 [hidden] { display: none !important; }
 #save-notice { position: fixed; bottom: 12px; left: 12px; padding: 12px; background: #102126e8; border-radius: 8px; }
+.wave-picker { display: flex; align-items: center; gap: 6px; padding: 0 8px; background: #102126e8; font-size: .8rem; }
+.wave-picker input { width: 56px; padding: 8px; border: 1px solid #36554e; border-radius: 6px; font: inherit; }

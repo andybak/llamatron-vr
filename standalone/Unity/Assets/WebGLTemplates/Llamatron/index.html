@@ -32,6 +32,8 @@
     <button id="load" disabled>Quick load</button>
     <button id="export" disabled>Export save</button>
     <button id="import" disabled>Import save</button>
+    <label class="wave-picker">Test wave <input id="wave" type="number" min="1" max="100" value="1" aria-label="Test wave number"></label>
+    <button id="jump" disabled>Start wave</button>
     <input id="save-file" type="file" accept=".llsave" hidden>
   </nav>
   <p id="save-notice" role="status" hidden></p>
@@ -55,7 +57,7 @@
       if (resume) resume().catch(showError);
       game.SendMessage('Standalone simulation', 'StartGame');
       document.querySelector('#welcome').hidden = true;
-      for (const id of ['save', 'load', 'export', 'import']) document.querySelector(`#${id}`).disabled = false;
+      for (const id of ['save', 'load', 'export', 'import', 'jump']) document.querySelector(`#${id}`).disabled = false;
       canvas.focus();
     };
     window.addEventListener('llamatron-ready', () => {
@@ -83,6 +85,12 @@
       });
     }
     const saveFile = document.querySelector('#save-file');
+    document.querySelector('#jump').addEventListener('click', () => {
+      const wave = document.querySelector('#wave');
+      if (!wave.reportValidity()) return;
+      game.SendMessage('Standalone simulation', 'StartTestWave', wave.value);
+      canvas.focus();
+    });
     document.querySelector('#import').addEventListener('click', () => saveFile.click());
     saveFile.addEventListener('change', async () => {
       try {

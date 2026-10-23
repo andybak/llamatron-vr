@@ -234,6 +234,21 @@ namespace Llamatron.Unity
             catch (Exception exception) { ReportSave($"Import failed: {exception.Message}"); }
         }
 
+        [UnityEngine.Scripting.Preserve]
+        public void StartTestWave(string value)
+        {
+            try
+            {
+                if (!int.TryParse(value, out int wave) || wave < 1 || wave > 100)
+                    throw new ArgumentException("Choose a wave from 1 to 100.");
+                var test = GameSession.Create(wave, seed: 17, playerFlags: (byte)playMode, displayHz: displayHz);
+                test.TwinStick = twinStick;
+                RestoreSave(test.Save());
+                ReportSave($"Started test wave {wave} with seed 17.");
+            }
+            catch (Exception exception) { ReportSave($"Test wave failed: {exception.Message}"); }
+        }
+
         private void Update()
         {
             if (!ready) return;
