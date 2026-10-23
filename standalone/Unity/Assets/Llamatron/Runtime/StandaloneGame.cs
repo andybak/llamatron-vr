@@ -55,6 +55,10 @@ namespace Llamatron.Unity
 
         private IEnumerator Start()
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            // Let HTML fields receive typing; gameplay receives keys when the canvas has focus.
+            WebGLInput.captureAllKeyboardInput = false;
+#endif
             smoke = HasArgument("--smoke");
             SpriteLibrary library = Resources.Load<SpriteLibrary>("Generated/SpriteLibrary");
             if (library == null) { Debug.LogError("[LLUNITY] Bake the standalone sprite library before running."); yield break; }
