@@ -17,7 +17,7 @@ namespace Llamatron.Unity
         private PixelPanel panel;
         private HighScoreTable scores;
         private Keyboard textKeyboard;
-        private string entry = "";
+        private readonly HighScoreNameEntry nameEntry = new HighScoreNameEntry();
         private ScrollPage scrollPage;
         private Color32[] textPalette;
         private readonly Queue<(int player, uint score)> pendingScores = new Queue<(int, uint)>();
@@ -55,7 +55,7 @@ namespace Llamatron.Unity
         }
         private void TextInput(char c)
         {
-            if (Page == PresentationPage.NameEntry && c >= 32 && c < 127 && entry.Length < 8) entry += c;
+            if (Page == PresentationPage.NameEntry) nameEntry.Type(c);
         }
         public void Loaded(bool eligible = true)
         {
@@ -70,7 +70,7 @@ namespace Llamatron.Unity
         {
             if (!Enum.TryParse(page, true, out PresentationPage target)) throw new ArgumentException("Unknown presentation page.");
             if (target == PresentationPage.Demo) { NewGame(true); return; }
-            if (target == PresentationPage.NameEntry) { pendingScore = 400000; entry = "TEST"; }
+            if (target == PresentationPage.NameEntry) { pendingScore = 400000; nameEntry.Reset("TEST"); }
             Show(target);
             preview = true;
             if (target == PresentationPage.Story || target == PresentationPage.Guide) scroll = 400;
@@ -125,18 +125,18 @@ namespace Llamatron.Unity
                 var pending = pendingScores.Dequeue();
                 pendingScore = pending.score; pendingPlayer = pending.player;
                 if (scores.Rank(pendingScore) < 0) continue;
-                entry = PlayerPrefs.GetString($"LlamatronPlayer{pendingPlayer}Name.v1", "");
+                nameEntry.Reset(PlayerPrefs.GetString($"LlamatronPlayer{pendingPlayer}Name.v1", ""));
                 Show(PresentationPage.NameEntry); return;
             }
             Show(PresentationPage.Scores);
         }
         internal void SubmitScore()
         {
-            scores.Insert(pendingScore, string.IsNullOrWhiteSpace(entry) ? "ANON" : entry);
+            scores.Insert(pendingScore, string.IsNullOrWhiteSpace(nameEntry.Value) ? "ANON" : nameEntry.Value);
             if (persistScores)
             {
                 PlayerPrefs.SetString(ScoresKey, Convert.ToBase64String(scores.Save()));
-                PlayerPrefs.SetString($"LlamatronPlayer{pendingPlayer}Name.v1", entry); PlayerPrefs.Save();
+                PlayerPrefs.SetString($"LlamatronPlayer{pendingPlayer}Name.v1", nameEntry.Value); PlayerPrefs.Save();
             }
             NextScore();
         }
@@ -165,7 +165,7 @@ namespace Llamatron.Unity
             }
             if (Page == PresentationPage.NameEntry)
             {
-                if (keyboard != null && keyboard.backspaceKey.wasPressedThisFrame && entry.Length > 0) entry = entry.Substring(0, entry.Length - 1);
+                if (keyboard != null && keyboard.backspaceKey.wasPressedThisFrame) nameEntry.Backspace();
                 if ((pressed & 128) != 0 || (keyboard != null && keyboard.enterKey.wasPressedThisFrame)) SubmitScore();
                 return;
             }
@@ -233,7 +233,7 @@ namespace Llamatron.Unity
             else if (Page == PresentationPage.NameEntry)
             {
                 Text($"PLAYER {pendingPlayer} - NEW HIGH SCORE\n\n{pendingScore:D8}\n\nENTER YOUR NAME (8 CHARACTERS)", 200, 65, Color.cyan, true);
-                Text($"{entry.PadRight(8, '-')}", 200, 142, Color.yellow, true);
+                Text($"{nameEntry.Value.PadRight(8, '-')}", 200, 142, Color.yellow, true);
                 Text("TYPE - BACKSPACE TO EDIT", 200, 174, Color.white, true);
                 if (Button("SAVE SCORE / ENTER", 80, 210, 240)) SubmitScore();
             }
