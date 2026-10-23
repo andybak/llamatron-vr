@@ -13,6 +13,7 @@
    callback; CS:012a installs CS:402c as the independent display callback.
    Samples 21, 2, 20 and 17 retain their recovered rate/priority parameters.
    The 32 idle beasties use CS:44d7/4571/4603 initialization, 16.16 physics,
+   initial horizontal speeds of 1/16 through 2 pixels per IRQ,
    reflections and direction-dependent animation. They occupy a separate lower
    strip with half-height position travel so the menu controls remain readable.
    Opening a menu over an existing game animates silently and preserves its save
@@ -72,6 +73,10 @@
    NameEntry, Instructions, Story, Guide, Credits, GameOver and Demo. Scroll-page
    previews begin partway through their content to expose text and illustrations.
    Add `--presentation-title-ticks N` to inspect a particular reveal/idle stage.
+   Reveal stages at IRQ ticks 16, 64, 96, 136 and idle tick 300 were rendered and
+   inspected. The suspended game/audio save remained byte-identical after five
+   seconds of title animation. The combined natural attract check also passed
+   with the animated title and its audio (demo waves 1-3, then 16-18).
 4. Desktop renders of title, high scores, name entry, controls, illustrated story,
    field guide, credits, game over and running demo have been inspected. Native
    timed flow checks passed. A complete natural rotation also passed:

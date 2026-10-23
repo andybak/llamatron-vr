@@ -27,7 +27,8 @@ def export(analysis, source, output):
         sine = int.from_bytes(image[0x25590 + 0x4141 + (bp * 8 & 255):][:1], 'little', signed=True)
         base = bases[(bp >> 3) & 3]
         frames = [struct.unpack_from('<H', image, main + 0x1c + (base + frame) * 2)[0] for frame in (0, 1, 6, 7)]
-        particles.append(dict(x=160 + (bp - 15) * 4, y=18 + (sine >> 3), velocity=(bp + 1) << 13, sprites=frames))
+        # CS:4517-4545 has twelve SHL/RCL pairs: (bp + 1) / 16 pixels per IRQ.
+        particles.append(dict(x=160 + (bp - 15) * 4, y=18 + (sine >> 3), velocity=(bp + 1) << 12, sprites=frames))
     (output / 'OriginalTitleLayout.json').write_text(json.dumps(dict(draws=title, particles=particles, height=32)), encoding='utf-8')
     def advance(c):
         p = struct.unpack_from('<H', font, 2 + ord(c) * 2)[0]

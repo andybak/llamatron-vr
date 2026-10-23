@@ -6,7 +6,7 @@ static class TitleRevealChecks
 {
     public static void Run()
     {
-        var particle = new TitleParticleDefinition { x = 304, y = 0, velocity = 4 << 16, sprites = new[] { 10, 11, 12, 13 } };
+        var particle = new TitleParticleDefinition { x = 304, y = 0, velocity = 2 << 16, sprites = new[] { 10, 11, 12, 13 } };
         var reveal = new TitleReveal(70, new[] { particle });
         var sounds = new List<byte>();
         reveal.SoundRequested += (sample, rate, priority) => sounds.Add(sample);
@@ -26,7 +26,7 @@ static class TitleRevealChecks
         At(216);
         if (sounds[12] != 17 || reveal.Particles[0].X != 304) throw new Exception("[LLTITLE] Hold-end sound before motion.");
         At(217);
-        if (reveal.Particles[0].X != 300 || reveal.Particles[0].Sprite != 11) throw new Exception("[LLTITLE] Reflected beastie and facing frame.");
+        if (reveal.Particles[0].X != 302 || reveal.Particles[0].Sprite != 11) throw new Exception("[LLTITLE] Reflected beastie and facing frame.");
         var whole = new TitleReveal(70, new[] { particle }); var split = new TitleReveal(70, new[] { particle });
         whole.Advance(12.345);
         for (int i = 0; i < 100; i++) split.Advance(12.345 / 100);
