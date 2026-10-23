@@ -7,7 +7,8 @@ namespace Llamatron.Unity
     public sealed class SampledAudio : MonoBehaviour
     {
         public SoundDriverState Driver { get; private set; } = new SoundDriverState();
-        public int SamplePosition => voice != null && Driver.ActiveSample != 0 ? voice.timeSamples : 0;
+        public int SamplePosition => voice == null || Driver.ActiveSample == 0 ? 0 :
+            !voice.isPlaying && !systemPaused ? voice.clip.samples : voice.timeSamples;
         public int PlayedCount { get; private set; }
         public int StoppedCount { get; private set; }
         public float PeakOutput { get; private set; }
@@ -60,6 +61,9 @@ namespace Llamatron.Unity
             if (driver.ActiveSample == 0) return;
             voice.clip = clips[driver.ActiveSample];
             voice.pitch = (float)(SoundDriverState.RateHz(driver.ActiveRate) / OriginalSoundData.ContainerHz);
+            // An ended clip can still be active in the driver until its next
+            // completion poll. Keep that state without replaying the sample.
+            if (samplePosition >= voice.clip.samples) return;
             voice.timeSamples = Math.Max(0, Math.Min(samplePosition, voice.clip.samples - 1));
             voice.Play();
             if (systemPaused) voice.Pause();
