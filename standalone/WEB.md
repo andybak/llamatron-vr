@@ -19,6 +19,7 @@
    input uses the same stick/trigger controls as the native preview.
    Menu navigation also accepts stick up/down and trigger; A/X returns to the menu.
    **How to play > Field guide** shows the original illustrated instructions.
+   P or the page's **Pause/Resume** button holds scrolling pages for reading.
    Idle title screens rotate through the original story, three-wave AI demos and
    credits. **Watch demo** starts a demo immediately; Space/trigger leaves it.
    Qualifying games offer eight-character name entry and retain the top ten scores

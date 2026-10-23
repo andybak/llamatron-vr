@@ -12,6 +12,8 @@
    low-four-bit colors, signed spacing adjustments and inline sprites. Sprite
    commands index the main bank pointer table at entry 14 plus a big-endian word.
    Plain-text sidecars are retained alongside the colored, illustrated layouts.
+   P, the page's Pause/Resume button, or controller B/Y holds and resumes the
+   scroll. The mouse wheel can move through a paused page without resuming it.
 3. The title offers solo, droid or simultaneous two-player games, alternating
    turns and independent aim. Menus suspend the current simulation; M, Escape
    or the toolbar toggles the title menu and resumes its game with its pause state
@@ -48,6 +50,7 @@
    run uses an in-memory score table and does not write the user's high scores.
    It also waits for the real twelve-second score-table return and twenty-second
    idle-title transition, rather than substituting calls to the transition methods.
+   The scroll must hold its exact offset while paused and advance after resuming.
 3. `--desktop --presentation-page Title --presentation-capture <absolute.png>`
    captures a page through the real game camera. Other pages include Scores,
    NameEntry, Instructions, Story, Guide, Credits, GameOver and Demo. Scroll-page

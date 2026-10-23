@@ -28,6 +28,7 @@ namespace Llamatron.Unity
         private bool alternating, twinStick, automatic, hasGame, scoreEligible;
         private bool persistScores;
         private bool preview;
+        private bool scrollPaused;
         private float elapsed, scroll;
         private byte previousInput;
         private bool previousBack;
@@ -35,6 +36,8 @@ namespace Llamatron.Unity
         public bool ActiveGameplay => Page == PresentationPage.Playing || Page == PresentationPage.Demo;
         public bool IsDemo => Page == PresentationPage.Demo;
         public bool HasPlayerGame => hasGame;
+        internal float ScrollOffset => scroll;
+        internal void ToggleScrollPause() => scrollPaused = !scrollPaused;
 
         public void Initialize(StandaloneGame game, PixelText font, SpriteLibrary library, bool persistentScores = true)
         {
@@ -80,7 +83,7 @@ namespace Llamatron.Unity
         }
         private void Show(PresentationPage page, bool auto = false)
         {
-            Page = page; elapsed = scroll = 0; automatic = auto; preview = false;
+            Page = page; elapsed = scroll = 0; automatic = auto; preview = false; scrollPaused = false;
             panel.Visible(!ActiveGameplay);
             if (!ActiveGameplay) panel.Position();
             if (page == PresentationPage.Story || page == PresentationPage.Credits || page == PresentationPage.Guide)
@@ -182,10 +185,11 @@ namespace Llamatron.Unity
             }
             else if (Page == PresentationPage.Story || Page == PresentationPage.Credits || Page == PresentationPage.Guide)
             {
-                scroll += Time.unscaledDeltaTime * 18;
+                if ((pressed & 64) != 0 || (keyboard != null && keyboard.pKey.wasPressedThisFrame)) ToggleScrollPause();
+                if (!scrollPaused) scroll += Time.unscaledDeltaTime * 18;
                 if (Mouse.current != null) scroll = Mathf.Max(0, scroll - Mouse.current.scroll.ReadValue().y * 0.1f);
                 if (fire) { Menu(); return; }
-                if (automatic && scroll > scrollPage.height + 178) NextAttract();
+                if (!scrollPaused && automatic && scroll > scrollPage.height + 178) NextAttract();
             }
             else if (fire || (Page == PresentationPage.Scores && automatic && elapsed > 12)) Menu();
         }
@@ -255,7 +259,8 @@ namespace Llamatron.Unity
                     if (draw.sprite < 0) panel.Text(draw.text, 40 + draw.x, y, textPalette[draw.color & 15], false, 57, 235);
                     else panel.Sprite(draw.sprite, 40 + draw.x, y, 1, 0x118c, 57, 235);
                 }
-                if (Button("BACK / SKIP", 110, 245, 180)) { if (automatic) NextAttract(); else Menu(); }
+                if (Button(scrollPaused ? "RESUME (P)" : "PAUSE (P)", 40, 245, 150)) ToggleScrollPause();
+                if (Button("BACK / SKIP", 210, 245, 150)) { if (automatic) NextAttract(); else Menu(); }
             }
             panel.End();
         }

@@ -201,6 +201,13 @@ namespace Llamatron.Unity
             yield return new WaitForSecondsRealtime(20.5f);
             if (presentation.Page != PresentationPage.Story) throw new InvalidOperationException("Idle title did not start the attract cycle.");
             Debug.Log("[LLPRESENT] Timed idle title -> story passed.");
+            presentation.ToggleScrollPause(); float scrollBefore = presentation.ScrollOffset;
+            yield return new WaitForSecondsRealtime(0.2f);
+            if (presentation.ScrollOffset != scrollBefore) throw new InvalidOperationException("Paused scroll page kept moving.");
+            presentation.ToggleScrollPause();
+            yield return new WaitForSecondsRealtime(0.2f);
+            if (presentation.ScrollOffset <= scrollBefore) throw new InvalidOperationException("Scroll page did not resume.");
+            Debug.Log("[LLPRESENT] Scroll pause/resume passed.");
         }
 
         public bool BeginGame(PlayMode mode, bool splitAim, bool demonstration)
@@ -215,8 +222,11 @@ namespace Llamatron.Unity
             get
             {
                 byte input = ReadInput(null, InputDevices.GetDeviceAtXRNode(XRNode.LeftHand), InputDevices.GetDeviceAtXRNode(XRNode.RightHand), false);
+                if (Button(InputDevices.GetDeviceAtXRNode(XRNode.LeftHand), CommonUsages.secondaryButton) ||
+                    Button(InputDevices.GetDeviceAtXRNode(XRNode.RightHand), CommonUsages.secondaryButton)) input |= 64;
 #if UNITY_WEBGL && !UNITY_EDITOR
                 if (browser != null) input |= browser.Primary(false);
+                if (browser != null && (browser.SavePressed || browser.LoadPressed)) input |= 64;
 #endif
                 return input;
             }
