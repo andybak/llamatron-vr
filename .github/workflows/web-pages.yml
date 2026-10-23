@@ -81,7 +81,7 @@ jobs:
           path: |
             standalone/Unity/Library
             standalone/Unity/Assets/Llamatron/Resources/Generated
-          key: UnityWebGL-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('standalone/Unity/ProjectSettings/ProjectVersion.txt') }}-${{ hashFiles('standalone/Unity/Packages/**') }}-${{ hashFiles('standalone/Unity/Assets/**', '!standalone/Unity/Assets/Llamatron/Resources/Generated/**', 'standalone/Unity/ProjectSettings/**', 'tools/prepare_unity_web.py', 'tools/inspect_game.py', 'tools/export_sprites.py', 'tools/export_standalone_assets.py', 'tools/recover_audio.py', 'tools/fixtures/unity-web-profile.json') }}
+          key: UnityWebGL-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('standalone/Unity/ProjectSettings/ProjectVersion.txt') }}-${{ hashFiles('standalone/Unity/Packages/**') }}-${{ hashFiles('standalone/Unity/Assets/**', '!standalone/Unity/Assets/Llamatron/Resources/Generated/**', 'standalone/Unity/ProjectSettings/**', 'tools/prepare_unity_web.py', 'tools/inspect_game.py', 'tools/export_sprites.py', 'tools/export_standalone_assets.py', 'tools/export_presentation_assets.py', 'tools/recover_audio.py', 'tools/fixtures/unity-web-profile.json') }}
           restore-keys: |
             UnityWebGL-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('standalone/Unity/ProjectSettings/ProjectVersion.txt') }}-${{ hashFiles('standalone/Unity/Packages/**') }}-
 

@@ -10,6 +10,7 @@ static class Program
 
     public static void Main()
     {
+        PresentationChecks.Run();
         SaveChecks.Run();
         ChainChecks.Run();
         OrbitChecks.Run();

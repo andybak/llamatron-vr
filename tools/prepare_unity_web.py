@@ -47,6 +47,7 @@ def main():
     run('inspect_game.py', source, '--output', analysis)
     run('export_sprites.py', '--analysis', analysis, '--output', sprites, '--palette', palette)
     run('export_standalone_assets.py', '--sprites', sprites, '--output', args.output)
+    run('export_presentation_assets.py', '--analysis', analysis, '--source', source, '--output', args.output)
     # Keep the committed gameplay descriptors unchanged during asset preparation.
     run('recover_audio.py', '--source', source, '--reference-memory', memory,
         '--output', args.output / 'Audio', '--csharp', work / 'OriginalSoundData.cs',
