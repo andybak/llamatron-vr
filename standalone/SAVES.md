@@ -64,6 +64,7 @@
    bot can time out on difficult enemies, so a timeout is a retained test case,
    not automatically a game defect. The player build does not use this bot or
    the extra lives. Browser builds show a build timestamp on the welcome card;
-   close other tabs for the site when installing a service-worker update.
+   an **Update available** button preserves the current game before reloading.
+   Select **Resume saved game** afterward; the manual quick-save slot stays intact.
    Add `--report artifacts/state-details.json` to `inspect` to write the current
    spawn groups, player positions and complete actor words for diagnosis.

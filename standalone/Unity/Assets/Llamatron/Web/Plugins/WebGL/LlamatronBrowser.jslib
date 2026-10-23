@@ -1,4 +1,13 @@
 mergeInto(LibraryManager.library, {
+  LLWebGameStarted: function () {
+    window.dispatchEvent(new CustomEvent('llamatron-started'));
+  },
+  LLWebImportResult: function (success) {
+    window.dispatchEvent(new CustomEvent('llamatron-import-result', { detail: !!success }));
+  },
+  LLWebUpdateState: function (data) {
+    window.dispatchEvent(new CustomEvent('llamatron-update-state', { detail: UTF8ToString(data) }));
+  },
   LLWebSaveNotice: function (message) {
     window.dispatchEvent(new CustomEvent('llamatron-save', { detail: UTF8ToString(message) }));
   },

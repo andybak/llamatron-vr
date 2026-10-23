@@ -79,6 +79,28 @@ prove immersive stereo, controller or audio behavior on physical headsets.
    to discard existing caches if necessary. Caches are optional accelerators;
    GitHub can evict them and the workflow can rebuild from source.
 
+## Browser updates and offline play
+
+1. Online visits and normal reloads check the network for HTML. Unity output uses
+   content-hashed filenames; the loader, stylesheet, update helper and manifest
+   use explicit build versions. An older cached file cannot be mistaken for a
+   new build's file. The offline manifest records the exact URLs, including query
+   strings, and is verified during the build and in CI.
+2. While playing, **Update available** captures a temporary update save before
+   reloading. Select **Resume saved game** on the new welcome screen to restore
+   it and enable audio. This handoff does not replace your manual quick-save slot.
+   If capture/storage fails, updating is cancelled. If restoration fails, a copy
+   remains available through **Download previous game**.
+3. The worker checks for updates on visits, returning to the tab and periodically
+   while visible. New workers activate without requiring all tabs to close;
+   running older pages keep their own cached assets. Cleanup removes only older
+   caches belonging to this site's scope, once all its tabs report the current
+   version and the current offline bundle is complete.
+4. Offline navigation uses a completed page/asset bundle. A partial installation
+   cannot replace that fallback. Storage limits or unavailable caches do not block
+   online play. An already open older page can continue playing until you apply
+   its update or normally reload; a forced refresh is not part of the update flow.
+
 Package source and license:
 [WebXR Export 0.19.0](https://github.com/De-Panther/unity-webxr-export/tree/1454bd1a6716cbcd51d4013d780d97754be97d5d/Packages/webxr),
 Apache-2.0. The dependency is pinned in the Unity package manifest/lockfile; local

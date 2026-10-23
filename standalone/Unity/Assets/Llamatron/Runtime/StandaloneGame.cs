@@ -48,6 +48,9 @@ namespace Llamatron.Unity
         private BrowserPlatform browser;
         [DllImport("__Internal")] private static extern void LLWebDownloadSave(string data);
         [DllImport("__Internal")] private static extern void LLWebSaveNotice(string message);
+        [DllImport("__Internal")] private static extern void LLWebGameStarted();
+        [DllImport("__Internal")] private static extern void LLWebImportResult(int success);
+        [DllImport("__Internal")] private static extern void LLWebUpdateState(string data);
 #endif
 
         private IEnumerator Start()
@@ -100,6 +103,9 @@ namespace Llamatron.Unity
             if (!string.IsNullOrEmpty(initialSave)) RestoreSave(File.ReadAllBytes(initialSave));
 #endif
             ready = true;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            LLWebGameStarted();
+#endif
             Debug.Log($"[LLUNITY] Standalone ready; XR={xr}; sprites={library.graphics.Length}; irqHz={clock.InterruptHz:F6}; displayHz={clock.DisplayHz}; DOS runtime dependencies=0");
         }
 
@@ -230,8 +236,29 @@ namespace Llamatron.Unity
         [UnityEngine.Scripting.Preserve]
         public void ImportSaveGame(string data)
         {
-            try { RestoreSave(Convert.FromBase64String(data)); }
-            catch (Exception exception) { ReportSave($"Import failed: {exception.Message}"); }
+            try
+            {
+                RestoreSave(Convert.FromBase64String(data));
+#if UNITY_WEBGL && !UNITY_EDITOR
+                LLWebImportResult(1);
+#endif
+            }
+            catch (Exception exception)
+            {
+                ReportSave($"Import failed: {exception.Message}");
+#if UNITY_WEBGL && !UNITY_EDITOR
+                LLWebImportResult(0);
+#endif
+            }
+        }
+
+        [UnityEngine.Scripting.Preserve]
+        public void PrepareUpdate()
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            try { LLWebUpdateState(Convert.ToBase64String(CaptureSave())); }
+            catch (Exception exception) { ReportSave($"Update preparation failed: {exception.Message}"); }
+#endif
         }
 
         [UnityEngine.Scripting.Preserve]

@@ -98,6 +98,7 @@ jobs:
 
       - name: Check gameplay and portable save replay
         run: |
+          node --test tools/test_web_updates.mjs
           dotnet run --project standalone/Checks/Llamatron.Checks.csproj
           dotnet run --project standalone/StateTool -- sweep --atlas standalone/Unity/Assets/Llamatron/Resources/Generated/atlas.json --output artifacts/ci-gameplay/waves
           dotnet run --project standalone/StateTool -- campaign --reload-every 100 --output artifacts/ci-gameplay/campaign
@@ -113,18 +114,8 @@ jobs:
           buildMethod: Llamatron.Editor.StandaloneBuild.BuildWebCi
           versioning: None
 
-      - name: Verify complete web output
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          root = Path('artifacts/standalone/web')
-          assert (root / 'index.html').is_file(), 'Missing index.html'
-          assert '__LLAMATRON_BUILD_ID__' not in (root / 'index.html').read_text(), 'Unstamped build'
-          for name in json.loads((root / 'precache.json').read_text())['files']:
-              assert (root / name).exists(), f'Missing precached asset: {name}'
-          assert any((root / 'Build').glob('*.wasm*')), 'Missing WebAssembly player'
-          PY
+      - name: Verify complete web output and offline URLs
+        run: python tools/validate_web_build.py
 
       # Save after a verified build, even if a later artifact upload fails. Only the
       # newest marked commit writes, avoiding competing matrix jobs and cache churn.

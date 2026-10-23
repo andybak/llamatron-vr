@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Llamatron.Unity;
 using UnityEditor;
 using UnityEditor.Build;
@@ -208,22 +209,30 @@ namespace Llamatron.Editor
             if (!File.Exists(Path.Combine(output, "index.html")))
                 throw new InvalidOperationException("[LLWEB] Unity reported a successful Web build but produced no index.html. Inspect the build errors; restart the Editor if Web Build Support was just installed.");
             string buildId = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
-            foreach (string name in new[] { "index.html", "service-worker.js" })
+            foreach (string name in new[] { "index.html", "service-worker.js", "manifest.webmanifest" })
             {
                 string path = Path.Combine(output, name);
                 File.WriteAllText(path, File.ReadAllText(path).Replace("__LLAMATRON_BUILD_ID__", buildId));
             }
             var files = new List<string> { "./" };
+            var referencedBuildFiles = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Match match in Regex.Matches(File.ReadAllText(Path.Combine(output, "index.html")), @"Build/[^'""\s)]+"))
+                referencedBuildFiles.Add(match.Value.Split('?')[0]);
             foreach (string path in Directory.GetFiles(output, "*", SearchOption.AllDirectories))
             {
                 string relative = Path.GetRelativePath(output, path).Replace('\\', '/');
-                if (relative != "precache.json" && relative != "service-worker.js") files.Add(relative);
+                if (relative == "precache.json" || relative == "service-worker.js") continue;
+                // Reused local output folders can contain older hashed builds.
+                if (relative.StartsWith("Build/", StringComparison.Ordinal) && !referencedBuildFiles.Contains(relative)) continue;
+                bool versioned = relative == "style.css" || relative == "updates.js" || relative == "manifest.webmanifest" ||
+                                 relative == "icon.svg" || relative.EndsWith(".loader.js", StringComparison.Ordinal);
+                files.Add(versioned ? $"{relative}?v={buildId}" : relative);
             }
-            File.WriteAllText(Path.Combine(output, "precache.json"), JsonUtility.ToJson(new WebPrecache { files = files.ToArray() }));
+            File.WriteAllText(Path.Combine(output, "precache.json"), JsonUtility.ToJson(new WebPrecache { buildId = buildId, files = files.ToArray() }));
             Debug.Log($"[LLWEB] Web app ready at {output}; build={buildId}.");
         }
 
-        [Serializable] private sealed class WebPrecache { public string[] files; }
+        [Serializable] private sealed class WebPrecache { public string buildId; public string[] files; }
         public static void BuildAndroid() => BuildAndroidXr();
         [MenuItem("Llamatron/Build Android XR preview")]
         public static void BuildAndroidXr()

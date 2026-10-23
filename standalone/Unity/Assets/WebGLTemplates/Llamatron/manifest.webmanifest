@@ -8,6 +8,6 @@
   "background_color": "#070d10",
   "theme_color": "#102126",
   "icons": [
-    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+    {"src": "icon.svg?v=__LLAMATRON_BUILD_ID__", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
   ]
 }

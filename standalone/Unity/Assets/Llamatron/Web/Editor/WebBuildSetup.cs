@@ -38,6 +38,7 @@ namespace Llamatron.Web.Editor
             PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
             PlayerSettings.WebGL.decompressionFallback = true;
             PlayerSettings.WebGL.dataCaching = true;
+            PlayerSettings.WebGL.nameFilesAsHashes = true;
             PlayerSettings.WebGL.threadsSupport = false;
             PlayerSettings.WebGL.initialMemorySize = 128;
             PlayerSettings.WebGL.maximumMemorySize = 1024;

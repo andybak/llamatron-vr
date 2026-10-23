@@ -4,10 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#102126">
+  <meta name="llamatron-build" content="__LLAMATRON_BUILD_ID__">
   <title>Llamatron VR</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.webmanifest?v=__LLAMATRON_BUILD_ID__">
+  <link rel="icon" href="icon.svg?v=__LLAMATRON_BUILD_ID__" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css?v=__LLAMATRON_BUILD_ID__">
+  <script src="updates.js?v=__LLAMATRON_BUILD_ID__"></script>
 </head>
 <body>
   <canvas id="game" tabindex="0" aria-label="Llamatron game"></canvas>
@@ -34,6 +36,8 @@
     <button id="import" disabled>Import save</button>
     <label class="wave-picker">Test wave <input id="wave" type="number" min="1" max="100" value="1" aria-label="Test wave number"></label>
     <button id="jump" disabled>Start wave</button>
+    <button id="update" hidden>Update available</button>
+    <button id="recover" hidden>Download previous game</button>
     <input id="save-file" type="file" accept=".llsave" hidden>
   </nav>
   <p id="save-notice" role="status" hidden></p>
@@ -44,25 +48,68 @@
     const vr = document.querySelector('#vr');
     const status = document.querySelector('#status');
     const progress = document.querySelector('#progress');
-    let game, ready = false, immersive = false, installPrompt;
+    let game, ready = false, playing = false, immersive = false, installPrompt;
+    let updateStateResult, importResult;
     const showError = message => {
       const error = document.querySelector('#error');
       error.textContent = message;
       error.hidden = false;
       console.error(message);
     };
+    const updater = new LlamatronUpdater({
+      buildId: '__LLAMATRON_BUILD_ID__',
+      isPlaying: () => playing,
+      onAvailable: () => { document.querySelector('#update').hidden = false; },
+      onError: showError,
+      captureState: () => new Promise((resolve, reject) => {
+        const timer = setTimeout(() => { updateStateResult = null; reject(new Error('The game did not return an update save.')); }, 5000);
+        updateStateResult = state => { clearTimeout(timer); resolve(state); };
+        game.SendMessage('Standalone simulation', 'PrepareUpdate');
+      }),
+      restoreState: state => new Promise((resolve, reject) => {
+        const timer = setTimeout(() => { importResult = null; reject(new Error('The game did not restore the previous save.')); }, 5000);
+        importResult = success => { clearTimeout(timer); resolve(success); };
+        game.SendMessage('Standalone simulation', 'ImportSaveGame', state);
+      })
+    });
+    if (updater.hasResume) start.textContent = 'Resume saved game';
+    window.addEventListener('llamatron-update-state', event => {
+      const callback = updateStateResult; updateStateResult = null; callback?.(event.detail);
+    });
+    window.addEventListener('llamatron-import-result', event => {
+      const callback = importResult; importResult = null; callback?.(event.detail);
+    });
+    window.addEventListener('llamatron-started', () => {
+      playing = true;
+      for (const id of ['save', 'load', 'export', 'import', 'jump']) document.querySelector(`#${id}`).disabled = false;
+      if (updater.hasResume) setTimeout(async () => {
+        if (!(await updater.restore())) document.querySelector('#recover').hidden = false;
+      }, 0);
+    });
+    document.querySelector('#update').addEventListener('click', async event => {
+      event.currentTarget.disabled = true;
+      if (!(await updater.apply())) document.querySelector('#update').disabled = false;
+    });
+    document.querySelector('#recover').addEventListener('click', () => {
+      const binary = atob(updater.pending.state);
+      const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+      const link = document.createElement('a'); link.href = url; link.download = 'llamatron-before-update.llsave';
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    });
+    updater.start().catch(error => console.warn('[LLUPDATE] Update checks unavailable', error));
     const begin = () => {
       if (!game || !ready) return;
       const resume = game.Module.llamatronResumeAudio;
       if (resume) resume().catch(showError);
       game.SendMessage('Standalone simulation', 'StartGame');
       document.querySelector('#welcome').hidden = true;
-      for (const id of ['save', 'load', 'export', 'import', 'jump']) document.querySelector(`#${id}`).disabled = false;
       canvas.focus();
     };
     window.addEventListener('llamatron-ready', () => {
       ready = true;
-      status.textContent = 'Ready. Select Start to enable sound and play.';
+      status.textContent = updater.hasResume ? 'Update installed. Resume your saved game.' : 'Ready. Select Start to enable sound and play.';
       progress.hidden = true;
       start.disabled = !game;
     });
@@ -124,7 +171,7 @@
       document.querySelector('#install').hidden = true;
     });
     const loader = document.createElement('script');
-    loader.src = 'Build/{{{ LOADER_FILENAME }}}';
+    loader.src = 'Build/{{{ LOADER_FILENAME }}}?v=__LLAMATRON_BUILD_ID__';
     loader.onload = () => createUnityInstance(canvas, {
       dataUrl: 'Build/{{{ DATA_FILENAME }}}',
       frameworkUrl: 'Build/{{{ FRAMEWORK_FILENAME }}}',
@@ -143,9 +190,6 @@
     }).catch(showError);
     loader.onerror = () => showError('The game could not be downloaded. Reload to try again.');
     document.body.appendChild(loader);
-    if ('serviceWorker' in navigator && window.isSecureContext) {
-      navigator.serviceWorker.register('service-worker.js?v=__LLAMATRON_BUILD_ID__').catch(console.warn);
-    }
   </script>
 </body>
 </html>
