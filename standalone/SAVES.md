@@ -38,3 +38,26 @@
    Unity instead captures/resumes its AudioSource cursor. Byte-identical core
    replay is checked using matching input/event timing; browser/device audio
    latency and original-machine timing are separate validation work.
+7. Run complete scripted wave and campaign checks, retaining portable checkpoints:
+
+   ```powershell
+   dotnet run --project standalone/StateTool -- sweep --ticks 15000 --output artifacts/level-sweep
+   dotnet run --project standalone/StateTool -- campaign --reload-every 100 --output artifacts/campaign-reloaded
+   dotnet run --project standalone/StateTool -- campaign --reload-every 0 --output artifacts/campaign-uninterrupted
+   ```
+
+   The wave sweep uses original demo control independently on all 100 waves.
+   The campaign extends the demo counter and runs 100 transitions continuously,
+   including clears and warps; warps can skip levels. These checks deliberately
+   retain the original demo's damage/score suppression and do not establish
+   human difficulty or parity with an original-machine replay. Reports distinguish
+   clears, warps, faults and timeouts. Start/end states and wave-entry checkpoints are
+   loadable in the player. Web-release CI runs the checks and retains their files
+   with the diagnostic artifact.
+8. Add `--first-wave 78 --last-wave 78 --seed 29` to a sweep for a focused retry.
+   `--control normal` uses legal directional input in droid mode with 1000 lives
+   for testing; it retains normal damage, scoring and retry logic. Its simple test
+   bot can time out on difficult enemies, so a timeout is a retained test case,
+   not automatically a game defect. The player build does not use this bot or
+   the extra lives. Browser builds show a build timestamp on the welcome card;
+   close other tabs for the site when installing a service-worker update.

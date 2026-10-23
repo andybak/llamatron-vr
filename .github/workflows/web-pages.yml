@@ -88,10 +88,21 @@ jobs:
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.12'
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: '8.0.x'
       - name: Recreate original sprite and PCM assets
         run: |
           python -m pip install Pillow==11.3.0
           python tools/prepare_unity_web.py
+
+      - name: Check gameplay and portable save replay
+        run: |
+          dotnet run --project standalone/Checks/Llamatron.Checks.csproj
+          dotnet run --project standalone/StateTool -- sweep --atlas standalone/Unity/Assets/Llamatron/Resources/Generated/atlas.json --output artifacts/ci-gameplay/waves
+          dotnet run --project standalone/StateTool -- campaign --reload-every 100 --output artifacts/ci-gameplay/campaign
+          dotnet run --project standalone/StateTool -- campaign --reload-every 0 --output artifacts/ci-gameplay/uninterrupted
+          cmp artifacts/ci-gameplay/campaign/final.llsave artifacts/ci-gameplay/uninterrupted/final.llsave
 
       - name: Build Unity WebGL release
         uses: game-ci/unity-builder@adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1 # v5
@@ -150,6 +161,7 @@ jobs:
           path: |
             standalone/Unity/Logs
             artifacts/unity-web-input/audio-assets.json
+            artifacts/ci-gameplay
           if-no-files-found: ignore
           retention-days: 7
 

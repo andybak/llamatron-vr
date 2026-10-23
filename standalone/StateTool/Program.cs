@@ -5,6 +5,8 @@ using Llamatron.Core;
 
 try
 {
+    if (args.Length > 0 && args[0] == "campaign") return CampaignSweep.Run(args);
+    if (args.Length > 0 && args[0] == "sweep") return WaveSweep.Run(args);
     if (args.Length == 0) throw new ArgumentException("Use create, replay or inspect. Options: --wave 1..100 --seed N --cycle N --mode 0/1/3/4/5/7 --ticks N --input 0..255 --secondary 0..255 --load file.llsave --save file.llsave --twin-stick true/false");
     string command = args[0]; var options = new Dictionary<string, string>();
     for (int i = 1; i < args.Length; i += 2)
