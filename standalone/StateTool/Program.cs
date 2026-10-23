@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.Json;
 using Llamatron.Core;
 
 try
@@ -42,6 +44,22 @@ try
         Console.WriteLine($"[LLSAVE] Wrote {path}");
     }
     var actors = session.Simulation.Actors;
+    string report = Get("--report");
+    if (report.Length != 0)
+    {
+        string path = Path.GetFullPath(report); Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var data = new { wave = session.Campaign.WaveNumber, phase = session.Campaign.Phase.ToString(), session.Clock.Time,
+            session.Clock.InterruptCount, session.Clock.DisplayCount, actors.Lives, actors.Outcome,
+            actors.PrimaryStatus, actors.SecondaryStatus, actors.HitLockTicks, actors.SpawnComplete,
+            playerX = actors.Spawning.PlayerX, playerY = actors.Spawning.PlayerY,
+            secondaryX = actors.Spawning.SecondPlayerX, secondaryY = actors.Spawning.SecondPlayerY,
+            groups = session.Simulation.Wave.Groups.Select(group => new { group.Kind, group.Instances }),
+            records = actors.Spawning.Pool.Records.Select((entity, index) => new { index, entity.Active, entity.State,
+                entity.X, entity.Y, entity.RenderState, kind = entity[0x3a], damage = entity[0x3e],
+                words = Enumerable.Range(0, 32).Select(word => entity[word * 2]).ToArray() }) };
+        File.WriteAllText(path, JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
+        Console.WriteLine($"[LLSAVE] Wrote diagnostic report {path}");
+    }
     Console.WriteLine($"[LLSAVE] wave={session.Campaign.WaveNumber}; phase={session.Campaign.Phase}; IRQ={session.Clock.InterruptCount}; display={session.Clock.DisplayCount}; lives={actors.Lives}; hostiles={actors.Spawning.HostileCount}; herd={actors.Spawning.HerdCount}; random={actors.Spawning.Random.Index}; fault={session.Fault}");
     return session.Fault.Length == 0 ? 0 : 1;
 }

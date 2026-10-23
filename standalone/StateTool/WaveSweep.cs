@@ -35,6 +35,7 @@ static class WaveSweep
                 playerFlags: control == "normal" ? (byte)1 : (byte)0, sound: sound, demoWaves: control == "demo" ? (short)3 : (short)0);
             if (control == "normal") game.Actors.Lives = 1000; // Exercise real deaths/retries without a short game-over cutoff.
             var session = new GameSession(game, new GameCampaign(game), new GameClock(70), sound);
+            session.TwinStick = control == "normal";
             string result = "timeout";
             try
             {
@@ -43,7 +44,8 @@ static class WaveSweep
                 for (int tick = 0; tick < limit; tick++)
                 {
                     double target = (session.Clock.InterruptCount + 1) / session.Clock.InterruptHz;
-                    session.Advance(Math.Max(0, target - session.Clock.Time), control == "normal" ? BotInput(game) : (byte)0);
+                    var inputs = control == "normal" ? BotInput(game) : ((byte)0, (byte)0);
+                    session.Advance(Math.Max(0, target - session.Clock.Time), inputs.Item1, inputs.Item2);
                     foreach (SpriteCommand sprite in session.Frame.Commands)
                     {
                         if (sprite.IsLine) continue;
@@ -72,7 +74,7 @@ static class WaveSweep
 
     // Legal directional input for a normal droid-mode game. The robot remains
     // controlled by the original AI. This test bot is not shipped player logic.
-    private static byte BotInput(GameSimulation game)
+    private static (byte Move, byte Aim) BotInput(GameSimulation game)
     {
         var spawn = game.Actors.Spawning; Entity? target = null; int nearest = int.MaxValue;
         foreach (Entity entity in spawn.Pool.Records.Take(EntityPool.GameplayRecords))
@@ -81,8 +83,19 @@ static class WaveSweep
             int distance = Math.Abs(entity.X - spawn.PlayerX) + Math.Abs(entity.Y - spawn.PlayerY);
             if (distance < nearest) { nearest = distance; target = entity; }
         }
-        if (target == null) return (byte)(1 << ((game.Actors.FrameCounter >> 6) & 3));
+        if (target == null) return ((byte)(1 << ((game.Actors.FrameCounter >> 6) & 3)), 0);
         int dx = target.X - spawn.PlayerX, dy = target.Y - spawn.PlayerY;
-        return (byte)((dx < -3 ? 4 : dx > 3 ? 8 : 0) | (dy < -3 ? 1 : dy > 3 ? 2 : 0));
+        int aimX = Math.Abs(dy) > Math.Abs(dx) * 2 ? 0 : Math.Sign(dx);
+        int aimY = Math.Abs(dx) > Math.Abs(dy) * 2 ? 0 : Math.Sign(dy);
+        int moveX = Math.Sign(dx), moveY = Math.Sign(dy);
+        if (spawn.HostileCount > 0)
+        {
+            if (nearest < 75) { moveX = -moveX; moveY = -moveY; }
+            else if (nearest < 150) { moveX = -Math.Sign(dy); moveY = Math.Sign(dx); }
+            if (spawn.PlayerX < 25) moveX = 1; else if (spawn.PlayerX > 295) moveX = -1;
+            if (spawn.PlayerY < 25) moveY = 1; else if (spawn.PlayerY > 175) moveY = -1;
+        }
+        byte Mask(int x, int y) => (byte)((x < 0 ? 4 : x > 0 ? 8 : 0) | (y < 0 ? 1 : y > 0 ? 2 : 0));
+        return (Mask(moveX, moveY), Mask(aimX, aimY));
     }
 }
