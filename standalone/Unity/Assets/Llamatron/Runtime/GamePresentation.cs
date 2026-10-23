@@ -128,7 +128,7 @@ namespace Llamatron.Unity
                 nameEntry.Reset(PlayerPrefs.GetString($"LlamatronPlayer{pendingPlayer}Name.v1", ""));
                 Show(PresentationPage.NameEntry); return;
             }
-            Show(PresentationPage.Scores);
+            Show(PresentationPage.Scores, true);
         }
         internal void SubmitScore()
         {
@@ -172,6 +172,7 @@ namespace Llamatron.Unity
             if (escape) { Menu(); return; }
             if (Page == PresentationPage.Title)
             {
+                if (Mouse.current != null && Mouse.current.delta.ReadValue().sqrMagnitude > 0) elapsed = 0;
                 if ((pressed & 2) != 0 || (keyboard != null && keyboard.downArrowKey.wasPressedThisFrame)) { selection = (selection + 1) % 9; elapsed = 0; }
                 if ((pressed & 1) != 0 || (keyboard != null && keyboard.upArrowKey.wasPressedThisFrame)) { selection = (selection + 8) % 9; elapsed = 0; }
                 if (fire) { Activate(selection); return; }
@@ -184,7 +185,7 @@ namespace Llamatron.Unity
                 if (fire) { Menu(); return; }
                 if (automatic && scroll > scrollPage.height + 178) NextAttract();
             }
-            else if (fire) Menu();
+            else if (fire || (Page == PresentationPage.Scores && automatic && elapsed > 12)) Menu();
         }
         internal void Activate(int item)
         {

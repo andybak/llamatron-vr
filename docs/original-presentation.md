@@ -28,6 +28,9 @@
    offers qualifying names for each alternating player. Scores persist separately
    from portable games in `LlamatronHighScores.v1`. Browser storage remains local
    to the site/profile; this is not a shared online leaderboard.
+   Typing replaces the remembered name; Enter accepts it without editing. The
+   post-game table returns to title after twelve seconds, then resumes the idle
+   attract cycle. A manually opened score table stays open until dismissed.
 6. Pixel panels render inside the scene with the existing stereo-capable sprite
    shader. Keyboard, mouse and stick/trigger navigation share the menu commands.
    This does not resolve the deferred Quest Browser immersive rendering defect.
@@ -41,10 +44,14 @@
    selection, suspended clocks, resume, paused saves, test-wave and load entry,
    the attract dispatch, and game-over/name-entry/high-score transitions. This
    run uses an in-memory score table and does not write the user's high scores.
+   It also waits for the real twelve-second score-table return and twenty-second
+   idle-title transition, rather than substituting calls to the transition methods.
 3. `--desktop --presentation-page Title --presentation-capture <absolute.png>`
    captures a page through the real game camera. Other pages include Scores,
    NameEntry, Instructions, Story, Guide, Credits, GameOver and Demo. Scroll-page
    previews begin partway through their content to expose text and illustrations.
-4. Initial desktop renders of title, high scores, name entry, controls and running
-   demo have been inspected. Browser deployment and manual input/persistence
-   checks remain necessary before claiming the complete browser flow is verified.
+4. Desktop renders of title, high scores, name entry, controls, illustrated story,
+   field guide, credits, game over and running demo have been inspected. Native
+   timed flow checks passed. Web release `8b07655` deployed successfully, with
+   matching HTML/offline versions. Manual browser input/persistence checks remain
+   necessary before claiming the complete browser flow is verified.

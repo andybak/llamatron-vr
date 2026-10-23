@@ -195,6 +195,12 @@ namespace Llamatron.Unity
             if (presentation.Page != PresentationPage.NameEntry) throw new InvalidOperationException("Qualifying score did not request a name.");
             presentation.SubmitScore();
             if (presentation.Page != PresentationPage.Scores) throw new InvalidOperationException("Name entry did not return to high scores.");
+            yield return new WaitForSecondsRealtime(12.5f);
+            if (presentation.Page != PresentationPage.Title) throw new InvalidOperationException("Post-game high scores did not return to title.");
+            Debug.Log("[LLPRESENT] Timed post-game scores -> title passed.");
+            yield return new WaitForSecondsRealtime(20.5f);
+            if (presentation.Page != PresentationPage.Story) throw new InvalidOperationException("Idle title did not start the attract cycle.");
+            Debug.Log("[LLPRESENT] Timed idle title -> story passed.");
         }
 
         public bool BeginGame(PlayMode mode, bool splitAim, bool demonstration)
