@@ -2,7 +2,7 @@ using System;
 
 namespace Llamatron.Core
 {
-    public sealed class PlayerMotionState
+    public sealed partial class PlayerMotionState
     {
         public short FireX, FireY, ProjectileSprite, AimMask, Facing;
         public short MoveX, MoveY, TrailDirection;

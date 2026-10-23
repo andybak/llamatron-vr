@@ -4,7 +4,7 @@ namespace Llamatron.Core
 {
     // Shared globals used by CS:1d8d and the spawn handlers. Each member retains
     // its original word semantics. Full wave startup/scheduling remains separate.
-    public sealed class SpawnContext
+    public sealed partial class SpawnContext
     {
         public EntityPool Pool { get; }
         public RandomSequence Random { get; }

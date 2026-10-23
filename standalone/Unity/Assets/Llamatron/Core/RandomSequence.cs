@@ -3,7 +3,7 @@ using System;
 namespace Llamatron.Core
 {
     // CS:e4de reads a cyclic shuffled 512-byte table, not a new PRNG sample.
-    public sealed class RandomSequence
+    public sealed partial class RandomSequence
     {
         private readonly byte[] table;
         public int Index { get; private set; }

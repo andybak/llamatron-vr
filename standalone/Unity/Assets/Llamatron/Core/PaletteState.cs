@@ -6,7 +6,7 @@ namespace Llamatron.Core
 
     // VGA path: CS:1be6 (full load), 3e4e (IRQ entry 1), e946 (display entry 0).
     // Colors retain their original six-bit DAC components until presentation.
-    public sealed class PaletteState
+    public sealed partial class PaletteState
     {
         public readonly struct Color
         {

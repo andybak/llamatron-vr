@@ -14,7 +14,7 @@ namespace Llamatron.Core
 
     // CS:0501 initializes 128 eight-byte records. CS:1961-19ce advances only
     // when the player's position changes; direction-only changes do not append.
-    public sealed class TrailHistory
+    public sealed partial class TrailHistory
     {
         private readonly TrailPoint[] points = new TrailPoint[128];
         public int ByteCursor { get; private set; }

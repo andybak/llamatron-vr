@@ -4,7 +4,7 @@ namespace Llamatron.Core
 {
     // Shared actor-update globals. Field comments retain their original DS
     // locations; the full game loop still owns timing and phase transitions.
-    public sealed class ActorContext
+    public sealed partial class ActorContext
     {
         public SpawnContext Spawning { get; }
         public short PrimaryStatus = 100; // 07f3

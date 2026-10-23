@@ -4,7 +4,7 @@ namespace Llamatron.Core
 {
     // Discrete normal-play frame advancement. Unported actor/spawn/damage states
     // still fail explicitly; this is not yet the complete game or timing driver.
-    public sealed class GameSimulation
+    public sealed partial class GameSimulation
     {
         public ActorContext Actors { get; }
         public BulletSystem Bullets { get; } = new BulletSystem();

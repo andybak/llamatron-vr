@@ -1,6 +1,6 @@
 # Standalone reconstruction in progress
 
-[Browser build and WebXR instructions](WEB.md)
+[Browser build and WebXR instructions](WEB.md) · [Save/load and test states](SAVES.md)
 
 The existing `Play.cmd` still starts the DOSBox-based Windows mod. This directory
 contains the replacement's portable gameplay core, with no DOS, emulator, process

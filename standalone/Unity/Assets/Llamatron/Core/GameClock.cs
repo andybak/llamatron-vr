@@ -6,7 +6,7 @@ namespace Llamatron.Core
     // host's Update rate. Recalculate deadlines from counts to avoid drift from
     // repeatedly adding a rounded period. The initial hardware phase still
     // requires a captured DOS trace for a cycle-identical replay.
-    public sealed class GameClock
+    public sealed partial class GameClock
     {
         public double InterruptHz => OriginalTiming.InterruptHz;
         public double DisplayHz { get; }

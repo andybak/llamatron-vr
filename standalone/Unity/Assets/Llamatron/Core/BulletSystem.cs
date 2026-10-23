@@ -10,7 +10,7 @@ namespace Llamatron.Core
         public bool Active => X >= 0;
     }
 
-    public sealed class BulletSystem
+    public sealed partial class BulletSystem
     {
         private readonly Bullet[] shots = new Bullet[15];
         public IReadOnlyList<Bullet> Shots { get; }

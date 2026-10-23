@@ -4,7 +4,7 @@ namespace Llamatron.Core
 {
     public enum CampaignPhase { Playing, WaveClear, WipeExpand, WipeContract, WarpAudio, Continue, GameOver, Menu }
 
-    public readonly struct WipeStep
+    public readonly partial struct WipeStep
     {
         public readonly int Left, Top, Right, Bottom;
         public readonly byte ColorIndex;
@@ -19,7 +19,7 @@ namespace Llamatron.Core
     // Normal human campaign paths from CS:0625-0815. FrameReady is deliberately
     // raised BEFORE resolving outcomes: CS:0616 renders the final gameplay frame
     // before the main loop decrements lives or rebuilds the survivor stream.
-    public sealed class GameCampaign
+    public sealed partial class GameCampaign
     {
         public GameSimulation Simulation { get; }
         public CampaignPhase Phase { get; private set; }

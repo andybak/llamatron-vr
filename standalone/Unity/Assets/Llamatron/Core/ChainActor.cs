@@ -3,7 +3,7 @@ using System;
 namespace Llamatron.Core
 {
     // DS:4481: sixty-four eight-byte records; the unused fourth word is untouched.
-    public sealed class ChainHistory
+    public sealed partial class ChainHistory
     {
         private readonly (short X, short Y, short Sprite)[] entries = new (short, short, short)[64];
         public short Cursor;

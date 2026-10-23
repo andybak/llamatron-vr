@@ -4,10 +4,11 @@ using System;
 namespace Llamatron.Core
 {
     // SBLASTER.BIN AH=3/4/5/6 and AH=2 service, without DSP/DMA hardware access.
-    public sealed class SoundDriverState
+    public sealed partial class SoundDriverState
     {
         public byte ActiveSample { get; private set; }
         public byte Priority { get; private set; } // AH=6 AL persists after DMA completion.
+        public byte ActiveRate { get; private set; }
         public byte PendingSample { get; private set; }
         public byte PendingStop { get; private set; }
         private byte pendingRate, pendingPriority;
@@ -37,6 +38,7 @@ namespace Llamatron.Core
             }
             if (ActiveSample != 0 || PendingSample == 0 || PendingSample >= 33) return;
             ActiveSample = PendingSample; PendingSample = 0; Priority = pendingPriority;
+            ActiveRate = pendingRate;
             Started?.Invoke(ActiveSample, pendingRate);
         }
     }

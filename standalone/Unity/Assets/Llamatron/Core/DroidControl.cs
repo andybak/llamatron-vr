@@ -1,7 +1,7 @@
 namespace Llamatron.Core
 {
     // CS:176c-181a and 480e-495e: first-herd pursuit and quadrant firing.
-    public sealed class DroidControl
+    public sealed partial class DroidControl
     {
         public short AimCountdown = OriginalDroidData.InitialAimCountdown; // DS:0682.
         public short TargetRecord = OriginalDroidData.InitialTargetRecord; // DS:0919.

@@ -4,7 +4,7 @@ namespace Llamatron.Core
 {
     // Modeled fields of the original 200-byte DS:21a6..226d block. Scores,
     // random cursor, actor pool, motion and parameters outside it stay shared.
-    internal sealed class CampaignSnapshot
+    internal sealed partial class CampaignSnapshot
     {
         internal short Lives, SpriteVariant, WaveIndex, ScoreRepeat, LoveTimer;
         internal short Announcement, SpecialDropCountdown, DifficultyIncrement;

@@ -3,7 +3,7 @@ using System;
 namespace Llamatron.Core
 {
     // CS:0335 stores two scores as eight decimal digits, not binary integers.
-    public sealed class DecimalScoreboard
+    public sealed partial class DecimalScoreboard
     {
         private readonly byte[][] scores = { new byte[8], new byte[8] };
         public event Action? TenThousandCarry;

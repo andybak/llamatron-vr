@@ -3,7 +3,7 @@ using System;
 namespace Llamatron.Core
 {
     // Mutable level DATA. CS:123c/1241 can write here with SI=256e in state 19.
-    public sealed class WaveScriptStore
+    public sealed partial class WaveScriptStore
     {
         private readonly byte[][] scripts = OriginalWaves.CopyScripts();
         public WaveDefinition Decode(int index) => WaveDefinition.Decode(scripts[index]);

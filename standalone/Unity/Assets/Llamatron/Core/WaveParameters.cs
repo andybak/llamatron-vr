@@ -6,7 +6,7 @@ namespace Llamatron.Core
     // Parameters retain their original DS identifiers until all consumers are
     // understood. This is a small level-configuration map, not emulated memory.
     // Unwritten parameters carry over into the next wave in the original game.
-    public sealed class WaveParameters
+    public sealed partial class WaveParameters
     {
         private readonly Dictionary<ushort, short> words = new Dictionary<ushort, short>
         {
