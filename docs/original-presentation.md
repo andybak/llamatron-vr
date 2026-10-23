@@ -13,8 +13,10 @@
    commands index the main bank pointer table at entry 14 plus a big-endian word.
    Plain-text sidecars are retained alongside the colored, illustrated layouts.
 3. The title offers solo, droid or simultaneous two-player games, alternating
-   turns and independent aim. Menus suspend the current simulation; returning
-   preserves its pause state. New games reset mutable wave scripts. Loading a
+   turns and independent aim. Menus suspend the current simulation; M, Escape
+   or the toolbar toggles the title menu and resumes its game with its pause state
+   intact. A/X uses the same menu action; trigger/Space accepts continue prompts.
+   New games reset mutable wave scripts. Loading a
    portable state or choosing a test wave opens gameplay. The browser toolbar
    keeps saving/exporting available while a player game is suspended in a menu,
    enables pause while playing, and keeps loading/testing available at the title.

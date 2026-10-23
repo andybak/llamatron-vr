@@ -38,7 +38,7 @@ namespace Llamatron.Unity
         private SampledAudio sampledAudio;
         private PixelText hud;
         private GamePresentation presentation;
-        private bool ready, xr, paused, previousRestart, captured;
+        private bool ready, xr, paused, captured;
         private bool smokeFrameReady, systemPaused, skipNextDelta;
         private int ticks;
         private string fault;
@@ -173,8 +173,8 @@ namespace Llamatron.Unity
             if (clock.InterruptCount != before) throw new InvalidOperationException("Menu advanced the suspended game.");
             presentation.Activate(0); TogglePause();
             if (!GameSession.Load(CaptureSave()).Campaign.Paused) throw new InvalidOperationException("Pause was not captured immediately.");
-            presentation.Menu(); presentation.Activate(0);
-            if (!paused) throw new InvalidOperationException("Menu lost the user's pause state.");
+            presentation.Menu(); presentation.Menu();
+            if (!presentation.ActiveGameplay || !paused) throw new InvalidOperationException("Menu toggle did not resume the paused game.");
             TogglePause(); StartTestWave("69");
             if (!presentation.ActiveGameplay || campaign.WaveNumber != 69) throw new InvalidOperationException("Test wave did not leave the menu.");
             byte[] state = CaptureSave(); RestoreSave(state);
@@ -445,8 +445,6 @@ namespace Llamatron.Unity
                 if (keyboard != null && keyboard.f9Key.wasPressedThisFrame) LoadGame();
                 return;
             }
-            if (presentation != null && !presentation.IsDemo && keyboard != null &&
-                (keyboard.mKey.wasPressedThisFrame || keyboard.escapeKey.wasPressedThisFrame)) { ShowMenu(); return; }
             UnityEngine.XR.InputDevice left = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
             UnityEngine.XR.InputDevice right = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
             bool save = Button(left, CommonUsages.secondaryButton) || (keyboard != null && keyboard.f5Key.isPressed);
@@ -458,21 +456,14 @@ namespace Llamatron.Unity
             if (save && !previousSave) SaveGame();
             if (load && !previousLoad) LoadGame();
             previousSave = save; previousLoad = load;
-            bool restart = Button(left, CommonUsages.primaryButton) || Button(right, CommonUsages.primaryButton);
 #if UNITY_WEBGL && !UNITY_EDITOR
-            restart |= browser.RestartPressed;
             xr = browser.Immersive;
 #endif
-            bool ended = campaign.Phase == CampaignPhase.GameOver || campaign.Phase == CampaignPhase.Menu;
-            if ((keyboard != null && keyboard.rKey.wasPressedThisFrame) || (restart && !previousRestart && (ended || fault != null)))
+            if (keyboard != null && keyboard.rKey.wasPressedThisFrame)
             {
                 Restart(); if (presentation != null) presentation.Loaded(false);
             }
-            previousRestart = restart;
             if (keyboard != null && keyboard.pKey.wasPressedThisFrame) TogglePause();
-#if !UNITY_WEBGL || UNITY_EDITOR
-            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && !xr) Application.Quit();
-#endif
             campaign.Paused = paused;
             if (!systemPaused && !skipNextDelta && fault == null)
             {
@@ -482,7 +473,7 @@ namespace Llamatron.Unity
                 input |= browser.Primary(twinStick || ((int)playMode & 3) == 3);
                 secondary |= browser.Secondary();
 #endif
-                bool acceptContinue = !smoke && (restart || (input & 128) != 0);
+                bool acceptContinue = !smoke && (input & 128) != 0;
                 try
                 {
                     clock.Advance(Time.unscaledDeltaTime, () =>
@@ -538,7 +529,7 @@ namespace Llamatron.Unity
                 LLWebPauseState(paused ? 1 : 0);
             }
 #endif
-            string status = fault != null ? "This part of the reconstruction is unfinished.\nR / A: restart" :
+            string status = fault != null ? "This part of the reconstruction is unfinished.\nR: restart - M: menu" :
                 paused ? "PAUSED" : campaign.Phase == CampaignPhase.Continue ? $"CONTINUE? {campaign.ContinueCount} · SPACE / TRIGGER" :
                 campaign.Phase == CampaignPhase.GameOver ? "GAME OVER · R / A: new game" :
                 campaign.Phase == CampaignPhase.Menu ? "R / A: new game" :

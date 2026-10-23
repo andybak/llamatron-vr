@@ -8,6 +8,7 @@ namespace Llamatron.Unity
 {
     public enum PresentationPage { Title, Playing, Demo, Instructions, Story, Credits, Scores, NameEntry, GameOver, Guide }
 
+    [DefaultExecutionOrder(-100)]
     public sealed class GamePresentation : MonoBehaviour
     {
         [Serializable] private sealed class ScrollPage { public ScrollDraw[] draws; public int height; }
@@ -63,6 +64,7 @@ namespace Llamatron.Unity
         }
         public void Menu()
         {
+            if (Page == PresentationPage.Title && hasGame) { Show(PresentationPage.Playing); return; }
             if (IsDemo) { owner.StopPresentationAudio(); hasGame = false; }
             Show(PresentationPage.Title);
         }
@@ -154,7 +156,7 @@ namespace Llamatron.Unity
             if (ActiveGameplay)
             {
                 if (IsDemo && (fire || escape)) Menu();
-                else if (backPressed) Menu();
+                else if (escape) Menu();
                 return;
             }
             elapsed += Time.unscaledDeltaTime;
