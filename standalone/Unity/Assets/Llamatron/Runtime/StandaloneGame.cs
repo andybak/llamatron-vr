@@ -208,6 +208,20 @@ namespace Llamatron.Unity
             yield return new WaitForSecondsRealtime(0.2f);
             if (presentation.ScrollOffset <= scrollBefore) throw new InvalidOperationException("Scroll page did not resume.");
             Debug.Log("[LLPRESENT] Scroll pause/resume passed.");
+            if (HasArgument("--attract-check"))
+            {
+                foreach (PresentationPage target in new[] { PresentationPage.Demo, PresentationPage.Credits, PresentationPage.Demo, PresentationPage.Story })
+                {
+                    float deadline = Time.realtimeSinceStartup + 180;
+                    while (presentation.Page != target && Time.realtimeSinceStartup < deadline)
+                    {
+                        if (fault != null) throw new InvalidOperationException($"Attract mode fault: {fault}");
+                        yield return new WaitForSecondsRealtime(1);
+                    }
+                    if (presentation.Page != target) throw new InvalidOperationException($"Attract mode did not reach {target}; current={presentation.Page}.");
+                    Debug.Log($"[LLPRESENT] Natural attract transition reached {target}; wave={campaign.WaveNumber}; IRQ={clock.InterruptCount}.");
+                }
+            }
         }
 
         public bool BeginGame(PlayMode mode, bool splitAim, bool demonstration)

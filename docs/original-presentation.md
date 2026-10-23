@@ -53,12 +53,16 @@
    It also waits for the real twelve-second score-table return and twenty-second
    idle-title transition, rather than substituting calls to the transition methods.
    The scroll must hold its exact offset while paused and advance after resuming.
+   Adding `--attract-check` lets a full story/demo/credits/demo/story rotation run
+   naturally, including both complete three-wave AI demos, with per-stage timeouts.
 3. `--desktop --presentation-page Title --presentation-capture <absolute.png>`
    captures a page through the real game camera. Other pages include Scores,
    NameEntry, Instructions, Story, Guide, Credits, GameOver and Demo. Scroll-page
    previews begin partway through their content to expose text and illustrations.
 4. Desktop renders of title, high scores, name entry, controls, illustrated story,
    field guide, credits, game over and running demo have been inspected. Native
-   timed flow checks passed. Web release `8b07655` deployed successfully, with
+   timed flow checks passed. A complete natural rotation also passed:
+   story, three-wave demo (waves 5-7), credits, three-wave demo (waves 7-9), story.
+   Web release `702a425` deployed successfully as build `20261023180631`, with
    matching HTML/offline versions. Manual browser input/persistence checks remain
    necessary before claiming the complete browser flow is verified.
