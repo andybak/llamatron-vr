@@ -11,6 +11,7 @@ static class Program
     public static void Main()
     {
         PresentationChecks.Run();
+        TitleRevealChecks.Run();
         SaveChecks.Run();
         ChainChecks.Run();
         OrbitChecks.Run();
