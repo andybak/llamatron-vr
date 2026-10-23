@@ -886,6 +886,52 @@ freeze-dependent threshold and the separate 140 comparison.
    are not integrated yet. The demo path has static instruction evidence and
    core checks, without an original-demo session comparison.
 
+## Save states and full-wave validation (2026-10-23)
+
+1. Versioned, checksum-protected portable saves now capture the complete modeled
+   simulation/campaign, clocks, mutable wave data, random state, both players,
+   histories, palette and audio. Saved drawing commands/wipes avoid advancing
+   rendering during load. Native and browser controls, portable import/export,
+   and a fixed-seed browser test-wave selector are implemented. See
+   [save controls and state tools](../standalone/SAVES.md).
+2. Eight representative-wave save checks and snapshots in pause, alternating-player
+   retry, warp audio, clear/wipe and continue phases replay identically after load.
+   A continuous scripted campaign with a checkpoint/load every 100 ticks matches
+   the uninterrupted final save byte for byte after 93,885 interrupts: 100
+   transitions, comprising 88 clears and 12 warps. It crosses a difficulty-cycle
+   boundary and retains the original mutable-spawner changes to wave 22.
+   This is portable-model consistency, not an original-machine state comparison.
+3. The corrected independent demo-control sweep records 99 clears and one warp
+   (wave 78), without faults or timeouts. A normal droid-mode twin-stick test bot
+   with 1000 lives records 97 clears, no warps/faults, and timeouts on waves
+   31/58/72. The normal run clears wave 78, so every wave has a recorded full
+   clear across the two runs. Normal testing retains damage, deaths/retries,
+   scoring and pickups; its extra lives and bot are diagnostic settings only.
+   These results do not establish human difficulty or balance. Both sweeps check
+   commands against the generated atlas; the demo run uses 260 distinct offsets.
+   [Retained validation summary](level-validation-20261023.json) includes commands
+   and the exact final-state digest. Binary checkpoints/reports stay in artifacts.
+4. The render-4 continuation probe now uses successive original-code breakpoints
+   at 449c, 8cc0 and e135. With a synthetic state-43/render-4 record, DI changes
+   from 48c1 to 325f; the next load obtains X=27400, Y=27440 and SI=001e, which
+   addresses pointer-table data instead of a valid sprite header. The actor's
+   render word has already advanced to 5. Verified code ranges, observed registers
+   and retained REA evidence identifiers are in
+   [the continuation record](render4-continuation-20261023.json).
+5. No current factory/update/damage path selects render 4. The known render-3
+   initializer at CS:3736 creates a vertical beam directly in state 1212, rather
+   than the spawn-delay lifecycle that increments rendering states. The original
+   title routines also reuse the same storage with a different record layout.
+   This narrows the reachability question; it does not prove that no rare original
+   execution can select the legacy handler. The explicit render-4 guard remains.
+   A natural triggering state is still needed before implementing its data-dependent
+   rasterization; the injected probe is not sufficient to define a valid effect.
+6. Unity 6000.3.18f1 built the save/load WebGL player successfully. The existing
+   Pipeline package still reports its known WebGL subtarget exception during the
+   build callback; Unity's build report succeeds and output files are verified.
+   Browser/headset save controls still need manual testing, and the separately
+   reported Quest Browser immersive-rendering problem remains unresolved.
+
 ## Remaining obligations
 
 1. Extend the working REA DOS analysis across the remaining indirect handlers and

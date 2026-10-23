@@ -1,0 +1,84 @@
+{
+  "source_sha256": "e4ca6f41aa770eb6989a9357ba048cf1f9b657425f117a351285010d5853636c",
+  "setup": "One synthetic state-43 actor with render 4; breakpoint CS:4672 after direct sprite call",
+  "regions_verified": [
+    [
+      "0x4499",
+      "0x44d6"
+    ],
+    [
+      "0x4646",
+      "0x4675"
+    ],
+    [
+      "0x8cc0",
+      "0x8dc9"
+    ],
+    [
+      "0xe135",
+      "0xe180"
+    ]
+  ],
+  "parent_di_before": "48c1",
+  "parent_render_after": 5,
+  "register_order": [
+    "CS",
+    "IP",
+    "DS",
+    "DI",
+    "AX",
+    "BX",
+    "SI",
+    "BP",
+    "SP"
+  ],
+  "stops": [
+    {
+      "address": "449c",
+      "registers_hex": [
+        "2fca",
+        "449c",
+        "5523",
+        "e60",
+        "676e",
+        "7420",
+        "230",
+        "0",
+        "1102"
+      ]
+    },
+    {
+      "address": "8cc0",
+      "registers_hex": [
+        "2fca",
+        "8cc0",
+        "5523",
+        "e60",
+        "676e",
+        "7420",
+        "230",
+        "5c2e",
+        "1102"
+      ]
+    },
+    {
+      "address": "e135",
+      "registers_hex": [
+        "2fca",
+        "e135",
+        "5523",
+        "e60",
+        "676e",
+        "7420",
+        "230",
+        "5c2e",
+        "1102"
+      ]
+    }
+  ],
+  "interpretation": "Synthetic render-4 actor; first draw changes DI, then CS:4499 reads unrelated DS words and reaches transformed writer with X=27400, Y=27440, SI=001e. Not an observed natural gameplay transition.",
+  "retained_REA_evidence": [
+    "ev_cc85d7ede631eff5248ac935e5ced1656898c1d2e6ef142a38603854d4ebea00",
+    "ev_8c7584c2a67b2012bf989e2ff42ad13887ca1fb614f71722f17af64d46079de4"
+  ]
+}

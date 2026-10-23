@@ -24,6 +24,7 @@ def main():
     parser.add_argument("--emulator", type=Path, default=ROOT / ".tools/dosbox-x/mingw-build/mingw-sdl2/dosbox-x.exe")
     parser.add_argument("--runtime", type=Path, help="New output directory; existing directories are refused")
     parser.add_argument("--seconds", type=float, default=1)
+    parser.add_argument("--trace-continuation", action="store_true", help="Trace the clobbered DI through the transformed-writer entry")
     args = parser.parse_args()
     if not 1 <= args.seconds <= 60:
         parser.error("Probe duration must be between 1 and 60 seconds")
@@ -96,7 +97,7 @@ def main():
             ds = cs + 0x2559
             def write(offset, payload):
                 command(f"EXEC SM {ds:04X}:{offset:04X} {' '.join(f'{value:02X}' for value in payload)}")
-            regions = [(0x4646, 0x4675), (0x8cc0, 0x8dc9)]
+            regions = [(0x4499, 0x44d6), (0x4646, 0x4675), (0x8cc0, 0x8dc9), (0xe135, 0xe180)]
             for first, last in regions:
                 assert reader.read(reader.guest_address + cs * 16 + first, last - first) == baseline[first:last]
             pool = bytearray(70 * 64)
@@ -118,6 +119,20 @@ def main():
             registers = command('EXEC EV CS EIP DS EDI EAX EBX ESI EBP')
             (runtime / 'registers.txt').write_text(registers)
             (runtime / 'after-data-segment.bin').write_bytes(reader.read(data, 65536))
+            if args.trace_continuation:
+                trace = []
+                for address in [0x449c, 0x8cc0, 0xe135]:
+                    deleted = command('EXEC BPDEL *')
+                    added = command(f'EXEC BP {cs:04X}:{address:04X}')
+                    command('EXEC RUN'); time.sleep(.1); command('BREAK')
+                    state = command('EXEC EV CS EIP DS EDI EAX EBX ESI EBP ESP')
+                    values = [int(value, 16) for value in state.splitlines()[-1].split()]
+                    if values[0] != cs or values[1] != address:
+                        raise RuntimeError(f'Continuation breakpoint {address:04x} missed: {state}')
+                    trace.append({'address': f'{address:04x}', 'registers': state, 'delete_response': deleted, 'breakpoint_response': added})
+                    (runtime / f'continuation-{address:04x}.bin').write_bytes(reader.read(data, 65536))
+                    (runtime / 'continuation-trace.json').write_text(json.dumps(trace, indent=2))
+                (runtime / 'sprite-events.json').write_text(json.dumps(reader.snapshot(), indent=2))
             report = {'source_sha256': hashlib.sha256(original).hexdigest(),
                       'setup': 'One synthetic state-43 actor with render 4; breakpoint CS:4672 after direct sprite call',
                       'regions_verified': [[hex(first), hex(last)] for first, last in regions],
